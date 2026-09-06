@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Compass, ExternalLink } from 'lucide-react'
+import { Menu, X, Compass } from 'lucide-react'
 import Logo from './Logo.jsx'
-
-const NAV_LINKS = [
-  { label: 'Operational Transition', href: '/#operational-reality' },
-  { label: '4 Bridge Stations', href: '/#agents' },
-  { label: 'Bengal Fleet Ledger', href: '/#zones' },
-  { label: 'Seasonal Ban Mandate', href: '/#ban-mandate' }
-]
+import LanguageSelector from './LanguageSelector.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [timeStr, setTimeStr] = useState('')
   const location = useLocation()
   const isAdvisory = location.pathname === '/advisory'
+  const { t } = useLanguage()
+
+  const navLinks = [
+    { label: t('nav', 'operationalTransition'), href: '/#operational-reality' },
+    { label: t('nav', 'bridgeStations'), href: '/#agents' },
+    { label: t('nav', 'fleetLedger'), href: '/#zones' },
+    { label: t('nav', 'banMandate'), href: '/#ban-mandate' }
+  ]
 
   useEffect(() => {
     const updateTime = () => {
@@ -42,16 +45,16 @@ export default function Navbar() {
       <div className="border-b border-[#BCDCE6] bg-[#E2F0F5] px-4 sm:px-6 py-1.5 text-[11px] text-[#2D4454] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="font-bold text-[#0A1B27] tracking-wide">
-            भारत सरकार • अंतरिक्ष विभाग
+            {t('nav', 'gov')}
           </span>
           <span className="hidden md:inline text-[#809BAA]">|</span>
           <span className="hidden md:inline font-medium text-[#2D4454]">
-            ISRO Problem Statement SIH26176 • INCOIS Coastal Telemetry
+            {t('nav', 'sub')}
           </span>
         </div>
         <div className="flex items-center gap-3 tabular-nums text-[10px] sm:text-[11px]">
           <span className="hidden sm:inline text-[#E86014] font-bold">
-            বঙ্গোপসাগরীয় উপকূলীয় নজরদারি
+            {t('nav', 'bengalTag')}
           </span>
           <span className="flex items-center gap-1.5 text-[#0A1B27] font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-[#007A78] animate-pulse" />
@@ -69,17 +72,17 @@ export default function Navbar() {
           </Link>
           <div className="hidden xl:flex flex-col border-l border-[#CCE4EC] pl-3 text-xs leading-tight">
             <span className="font-serif text-[#0A1B27] font-bold">
-              Sagar Roads Anchorage
+              {t('nav', 'sagarRoads')}
             </span>
             <span className="font-sans text-[10px] text-[#5C7788] tabular-nums font-medium">
-              21°39'N, 88°02'E • Hooghly Delta Shelf
+              {t('nav', 'hooghlyDelta')}
             </span>
           </div>
         </div>
 
         {/* Center: Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-7 text-xs font-bold">
-          {NAV_LINKS.map((link) => (
+        <nav className="hidden lg:flex items-center gap-6 text-xs font-bold">
+          {navLinks.map((link) => (
             <a
               key={link.label}
               href={link.href}
@@ -90,28 +93,32 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-3">
+        {/* Right: Language Menu & Action Buttons */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Language Selector Dropdown Menu */}
+          <LanguageSelector />
+
           {!isAdvisory ? (
             <Link
               to="/advisory"
-              className="inline-flex items-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-4 py-2 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
+              className="inline-flex items-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-3.5 sm:px-4 py-2 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
             >
               <Compass size={14} className="text-[#007A78]" />
-              <span>Launch Advisory Deck</span>
+              <span className="hidden xs:inline">{t('nav', 'launchAdvisory')}</span>
+              <span className="xs:hidden">Advisory</span>
             </Link>
           ) : (
             <Link
               to="/"
               className="inline-flex items-center gap-1.5 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-3.5 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors"
             >
-              <span>Return to Overview</span>
+              <span>{t('nav', 'returnOverview')}</span>
             </Link>
           )}
 
           {/* Mobile hamburger */}
           <button
-            className="lg:hidden text-[#0A1B27] p-1"
+            className="lg:hidden text-[#0A1B27] p-1.5 rounded hover:bg-slate-100"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? 'Close station menu' : 'Open station menu'}
             aria-expanded={open}
@@ -124,10 +131,13 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {open && (
         <div className="lg:hidden bg-white border-b border-[#CCE4EC] px-6 py-4 flex flex-col gap-3 shadow-lg">
-          <div className="text-xs text-[#5C7788] pb-2 border-b border-[#E0EEF3] font-semibold">
-            ISRO SIH26176 • Sagar Roads Station (21°39'N, 88°02'E)
+          <div className="flex items-center justify-between pb-2 border-b border-[#E0EEF3]">
+            <span className="text-xs text-[#5C7788] font-semibold">
+              ISRO SIH26176 • Sagar Roads Station
+            </span>
+            <LanguageSelector compact={false} />
           </div>
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <a
               key={link.label}
               href={link.href}
@@ -143,7 +153,7 @@ export default function Navbar() {
             onClick={() => setOpen(false)}
           >
             <Compass size={15} className="text-[#007A78]" />
-            Launch Working Advisory Deck
+            {t('nav', 'launchAdvisory')}
           </Link>
         </div>
       )}

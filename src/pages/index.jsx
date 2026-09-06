@@ -20,6 +20,7 @@ import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
 import Logo from '../components/Logo.jsx'
 import { zones } from '../lib/zones.js'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 const BRIDGE_STATIONS = [
   {
@@ -73,6 +74,8 @@ const BRIDGE_STATIONS = [
 ]
 
 export default function Landing() {
+  const { t } = useLanguage()
+
   return (
     <div className="min-h-screen font-sans">
       <Navbar />
@@ -87,13 +90,13 @@ export default function Landing() {
           {/* Header */}
           <div className="max-w-3xl mb-12">
             <div className="text-[#007A78] text-xs font-bold uppercase tracking-wider mb-2">
-              OPERATIONAL TRANSITION · THE BLIND VOYAGE VS THE ORCA SHIELD
+              {t('reality', 'tag')}
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0A1B27] leading-tight mb-3">
-              Bridging Satellite Telemetry to the Fisherman's Deck
+              {t('reality', 'title')}
             </h2>
             <p className="text-sm sm:text-base text-[#2D4454] leading-relaxed">
-              Traditional marine operations force small-boat skippers to navigate with fragmented radio alerts, raw sea temperature maps, and word-of-mouth rumours. ORCA replaces guesswork with deterministic, parallel agent deliberation.
+              {t('reality', 'desc')}
             </p>
           </div>
 

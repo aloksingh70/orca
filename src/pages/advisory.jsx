@@ -8,21 +8,23 @@ import ZoneCard from '../components/ZoneCard.jsx'
 import ReasoningTrace from '../components/ReasoningTrace.jsx'
 import { zones } from '../lib/zones.js'
 import { scanCoastline } from '../lib/agents.js'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
-const BRIDGE_STATIONS = [
-  { key: 'ocean', icon: Waves, color: 'text-emerald-400', label: 'Ocean Station (समुद्र)', sub: 'SST & Plankton Bloom' },
-  { key: 'weather', icon: Wind, color: 'text-indian-saffron', label: 'Weather Station (मौसम)', sub: 'Wind & Squall Limits' },
-  { key: 'history', icon: Fish, color: 'text-amber-400', label: 'Catch Ledger (इतिहास)', sub: 'CMFRI Landing Records' },
-  { key: 'sustain', icon: ShieldAlert, color: 'text-red-400', label: 'Sustainability (संरक्षण)', sub: 'Mandatory Ban Guard' }
-]
-
 export default function Advisory() {
+  const { t } = useLanguage()
   const [scanDate, setScanDate] = useState(todayStr())
   const [scanning, setScanning] = useState(false)
   const [results, setResults] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
+
+  const bridgeStations = [
+    { key: 'ocean', icon: Waves, color: 'text-emerald-600', label: t('stations', 'oceanName'), sub: t('stations', 'oceanSub') },
+    { key: 'weather', icon: Wind, color: 'text-orange-600', label: t('stations', 'weatherName'), sub: t('stations', 'weatherSub') },
+    { key: 'history', icon: Fish, color: 'text-amber-600', label: t('stations', 'historyName'), sub: t('stations', 'historySub') },
+    { key: 'sustain', icon: ShieldAlert, color: 'text-red-600', label: t('stations', 'sustainName'), sub: t('stations', 'sustainSub') }
+  ]
 
   const runScan = (date = scanDate, delay = 900) => {
     setScanning(true)
@@ -65,10 +67,10 @@ export default function Advisory() {
             className="inline-flex items-center gap-1.5 text-xs text-[#5C7788] hover:text-[#0A1B27] font-semibold transition-colors"
           >
             <ArrowLeft size={14} className="text-[#007A78]" />
-            <span>Return to Coastal Dispatch</span>
+            <span>{t('nav', 'returnDispatch')}</span>
           </Link>
           <div className="text-xs text-[#5C7788] tabular-nums hidden sm:block font-mono">
-            <span>COASTAL SECTOR: NORTHERN BAY OF BENGAL · CONTINENTAL SHELF</span>
+            <span>{t('nav', 'sectorLabel')}</span>
           </div>
         </div>
 
@@ -79,13 +81,13 @@ export default function Advisory() {
             <div>
               <div className="flex items-center gap-2 text-xs text-[#007A78] font-bold uppercase tracking-wider mb-1.5">
                 <Compass size={14} />
-                <span>STATION: SAGAR ROADS ANCHORAGE · 21°39'N, 88°02'E • SAGAR MITRA BRIDGE</span>
+                <span>{t('advisory', 'stationTag')}</span>
               </div>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0A1B27] tracking-tight">
-                ORCA Fleet Advisory Deck
+                {t('advisory', 'deckTitle')}
               </h1>
               <p className="text-xs text-[#2D4454] mt-1 max-w-2xl">
-                Simultaneous multi-agent evaluation across 6 West Bengal coastal fishing sectors calibrated for small crafts, mechanized gillnetters, and motorized nauskas.
+                {t('advisory', 'deckDesc')}
               </p>
             </div>
 
@@ -98,7 +100,7 @@ export default function Advisory() {
 
           {/* Parallel Bridge Telemetry Status Strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
-            {BRIDGE_STATIONS.map((st) => {
+            {bridgeStations.map((st) => {
               const Icon = st.icon
               return (
                 <div
@@ -129,7 +131,7 @@ export default function Advisory() {
             <div className="mt-4 p-3.5 border border-red-300 bg-red-50 rounded flex items-center gap-3 text-xs text-red-900">
               <AlertOctagon size={18} className="text-red-700 shrink-0" />
               <span>
-                <strong className="font-bold">Mandatory Seasonal Fishing Ban Active:</strong> Mechanized harvesting along the East Coast is legally closed under the Marine Fisheries Regulation Act from 15 April to 14 June (61 days). All continental shelf sectors are locked out regardless of ocean productivity.
+                <strong className="font-bold">{t('advisory', 'banActiveNotice')}</strong>
               </span>
             </div>
           )}
@@ -145,10 +147,10 @@ export default function Advisory() {
               </div>
             </div>
             <div className="font-serif text-lg font-bold text-[#0A1B27]">
-              Sounding Continental Shelf Sectors…
+              {t('advisory', 'soundingBannerTitle')}
             </div>
             <p className="text-xs text-[#5C7788] max-w-md">
-              Cross-evaluating thermal fronts, chlorophyll blooms, wind ceilings, and breeding ban status across Digha, Shankarpur, and Kakdwip.
+              {t('advisory', 'soundingBannerDesc')}
             </p>
           </div>
         )}
@@ -161,10 +163,10 @@ export default function Advisory() {
             <div className="lg:col-span-5 flex flex-col gap-3">
               <div className="flex items-center justify-between px-1 text-xs">
                 <span className="font-serif font-bold text-[#0A1B27] tracking-wide">
-                  Ranked Sector Directory ({results.length} Sounded)
+                  {t('advisory', 'dirTitle')} ({results.length} {t('advisory', 'sounded')})
                 </span>
                 <span className="text-[11px] text-[#5C7788] tabular-nums font-mono">
-                  RANKED BY SAFETY &amp; YIELD
+                  {t('advisory', 'rankedBy')}
                 </span>
               </div>
 
@@ -185,7 +187,7 @@ export default function Advisory() {
                 <ReasoningTrace result={selected} />
               ) : (
                 <div className="bg-white border border-[#CCE4EC] p-8 text-center text-xs text-[#5C7788]">
-                  Select a coastal sector from the left to inspect detailed telemetry and harbor advisories.
+                  {t('advisory', 'selectPrompt')}
                 </div>
               )}
             </div>
@@ -199,10 +201,10 @@ export default function Advisory() {
       <footer className="border-t border-slate-900 bg-[#061219] py-5 px-4 sm:px-6 mt-auto text-[11px] text-[#5C7788]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span>
-            Calibrated for West Bengal coastal crafts (mechanized trawlers, motorized nauka, non-mechanized dinghy).
+            {t('advisory', 'footerText')}
           </span>
           <span className="tabular-nums text-slate-300 font-medium">
-            ISRO SIH26176 · Team Tech Titans · ORCA Sagar Mitra
+            {t('advisory', 'footerCredits')}
           </span>
         </div>
       </footer>

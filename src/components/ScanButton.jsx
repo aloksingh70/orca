@@ -1,6 +1,9 @@
 import { Compass, Loader2 } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 export default function ScanButton({ onScan, scanning, hasResults }) {
+  const { t } = useLanguage()
+
   return (
     <button
       onClick={onScan}
@@ -16,14 +19,14 @@ export default function ScanButton({ onScan, scanning, hasResults }) {
         <>
           <Loader2 size={15} className="animate-spin shrink-0" style={{ color: '#FFFFFF' }} />
           <span style={{ color: '#FFFFFF' }} className="font-bold">
-            Sounding Shelf Sectors…
+            {t('advisory', 'scanning')}
           </span>
         </>
       ) : (
         <>
           <Compass size={15} className="shrink-0" style={{ color: '#FFFFFF' }} />
           <span style={{ color: '#FFFFFF' }} className="font-bold">
-            {hasResults ? 'Re-scan 6 Coastal Sectors' : 'Scan 6 Coastal Sectors'}
+            {hasResults ? t('advisory', 'rescanBtn') : t('advisory', 'scanBtn')}
           </span>
         </>
       )}
