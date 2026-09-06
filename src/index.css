@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background-color: #091825;
+  color: #FAF6EE;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Indian tricolor header ribbon */
+.tricolor-ribbon {
+  height: 3px;
+  background: linear-gradient(to right, #14a5e8 0%, #14b3e8 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #106644 66.66%, #106644 100%);
+}
+
+/* Tabular figures for instruments and numerical ledgers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: #14dae8;
+  color: #FFFFFF;
+}
+
+*:focus-visible {
+  outline: 2px solid #E86014;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom scrollbar */
+.scroll-refined::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroll-refined::-webkit-scrollbar-track {
+  background: #091825;
+}
+
+.scroll-refined::-webkit-scrollbar-thumb {
+  background: #1E384D;
+  border-radius: 2px;
+}
+
+.scroll-refined::-webkit-scrollbar-thumb:hover {
+  background: #3B596E;
+}

@@ -1,0 +1,126 @@
+/**
+ * zones.js
+ * A fixed list of 6 West Bengal coastal fishing zones with illustrative
+ * baseline parameters. Real place names, authentic bathymetric profiles,
+ * and coastal hydrography.
+ *
+ * seasonalCatchIndex is a 12-slot array (Jan..Dec) of illustrative average
+ * catch (kg/trip) used by the History Agent. peakCatch is the zone's max.
+ */
+export const zones = [
+  {
+    id: 'digha',
+    name: 'Digha',
+    sectorCode: 'WB-01',
+    distanceOffshore: '8 km',
+    soundingDepth: 12,
+    seabed: 'Fine estuarine silt & clay',
+    coordinates: "21°37'N, 87°31'E",
+    coastalDistrict: 'Purba Medinipur',
+    harborName: 'Digha Mohana Jetty',
+    fleetType: 'Mechanized gillnetters & small trawlers',
+    baseSST: 28.6,
+    baseChlorophyll: 1.5,
+    baseWind: 18,
+    baseWave: 1.1,
+    nearProtectedArea: false,
+    peakCatch: 620,
+    seasonalCatchIndex: [340, 360, 410, 480, 520, 560, 600, 620, 580, 500, 420, 370]
+  },
+  {
+    id: 'shankarpur',
+    name: 'Shankarpur',
+    sectorCode: 'WB-02',
+    distanceOffshore: '11 km',
+    soundingDepth: 16,
+    seabed: 'Compacted sandy mud',
+    coordinates: "21°38'N, 87°35'E",
+    coastalDistrict: 'Purba Medinipur',
+    harborName: 'Shankarpur Principal Fishing Harbour',
+    fleetType: 'Commercial trawler fleet (10-15m)',
+    baseSST: 28.3,
+    baseChlorophyll: 1.7,
+    baseWind: 20,
+    baseWave: 1.2,
+    nearProtectedArea: false,
+    peakCatch: 580,
+    seasonalCatchIndex: [320, 350, 390, 460, 500, 540, 580, 560, 520, 460, 400, 350]
+  },
+  {
+    id: 'junput',
+    name: 'Junput',
+    sectorCode: 'WB-03',
+    distanceOffshore: '14 km',
+    soundingDepth: 18,
+    seabed: 'Soft estuarine mudflat margin',
+    coordinates: "21°43'N, 87°49'E",
+    coastalDistrict: 'Purba Medinipur',
+    harborName: 'Junput Fish Landing Centre',
+    fleetType: 'Motorized country crafts & bag-netters',
+    baseSST: 28.9,
+    baseChlorophyll: 1.3,
+    baseWind: 22,
+    baseWave: 1.3,
+    nearProtectedArea: false,
+    peakCatch: 540,
+    seasonalCatchIndex: [300, 320, 360, 420, 460, 500, 540, 520, 470, 410, 360, 320]
+  },
+  {
+    id: 'sagar-island',
+    name: 'Sagar Island',
+    sectorCode: 'WB-04',
+    distanceOffshore: '19 km',
+    soundingDepth: 24,
+    seabed: 'Hooghly delta mouth silt ridge',
+    coordinates: "21°39'N, 88°02'E",
+    coastalDistrict: 'South 24 Parganas',
+    harborName: 'Sagar Roads Anchorage',
+    fleetType: 'Hilsa gillnetters & deep trawlers',
+    baseSST: 28.1,
+    baseChlorophyll: 2.1,
+    baseWind: 24,
+    baseWave: 1.5,
+    nearProtectedArea: true,
+    peakCatch: 700,
+    seasonalCatchIndex: [400, 430, 480, 540, 590, 630, 680, 700, 650, 560, 470, 410]
+  },
+  {
+    id: 'frazerganj',
+    name: 'Frazerganj',
+    sectorCode: 'WB-05',
+    distanceOffshore: '16 km',
+    soundingDepth: 21,
+    seabed: 'Outer sandbar & silty shoal',
+    coordinates: "21°34'N, 88°15'E",
+    coastalDistrict: 'South 24 Parganas',
+    harborName: 'Frazerganj Fishing Harbour',
+    fleetType: 'Mechanized trawlers & longliners',
+    baseSST: 28.4,
+    baseChlorophyll: 1.9,
+    baseWind: 21,
+    baseWave: 1.3,
+    nearProtectedArea: true,
+    peakCatch: 610,
+    seasonalCatchIndex: [350, 380, 420, 480, 520, 560, 600, 610, 570, 490, 420, 370]
+  },
+  {
+    id: 'kakdwip',
+    name: 'Kakdwip',
+    sectorCode: 'WB-06',
+    distanceOffshore: '22 km',
+    soundingDepth: 29,
+    seabed: 'Continental shelf sand-mud slope',
+    coordinates: "21°52'N, 88°11'E",
+    coastalDistrict: 'South 24 Parganas',
+    harborName: 'Kakdwip Steamerghat Port',
+    fleetType: 'Deep-sea multi-day voyage trawlers',
+    baseSST: 27.9,
+    baseChlorophyll: 2.3,
+    baseWind: 26,
+    baseWave: 1.6,
+    nearProtectedArea: false,
+    peakCatch: 660,
+    seasonalCatchIndex: [380, 400, 450, 510, 550, 600, 640, 660, 610, 530, 450, 390]
+  }
+]
+
