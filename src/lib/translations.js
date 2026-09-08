@@ -1,4 +1,4 @@
-﻿export const TRANSLATIONS = {
+export const TRANSLATIONS = {
   en: {
     langName: 'English',
     nav: {
@@ -113,6 +113,37 @@
       banActiveNotice: 'Mandatory Seasonal Fishing Ban Active: Mechanized harvesting along the East Coast is legally closed under the Marine Fisheries Regulation Act from 15 April to 14 June (61 days). All continental shelf sectors are locked out regardless of ocean productivity.',
       footerText: 'Calibrated for West Bengal coastal crafts (mechanized trawlers, motorized nauka, non-mechanized dinghy).',
       footerCredits: 'ISRO SIH26176 · Team Tech Titans · ORCA Sagar Mitra'
+    },
+    auth: {
+      signInTitle: 'Fleet Authentication & Dispatch Security',
+      signInSub: 'Authorized access for Vessel Skippers, Marine Fisheries Officials, and INCOIS Coastal Observers.',
+      tabSignIn: 'Skipper / Officer Sign In',
+      tabRegister: 'Fleet Vessel Registration',
+      emailLabel: 'Official Email / Operator ID',
+      emailPlaceholder: 'e.g. skipper@orca.gov.in',
+      passwordLabel: 'Security Credential (Password)',
+      passwordPlaceholder: 'Enter security passkey (min 6 chars)',
+      fullNameLabel: 'Skipper / Officer Full Name',
+      fullNamePlaceholder: 'e.g. Capt. Rajesh Mondal',
+      vesselNameLabel: 'Vessel Name & Class',
+      vesselNamePlaceholder: 'e.g. FB Maa Ganga (WB-24-M-104)',
+      regNumberLabel: 'MFRA Marine Registration No.',
+      regNumberPlaceholder: 'e.g. IND-WB-24-00918',
+      harborLabel: 'Base Jetty / Harbor Basin',
+      roleLabel: 'Duty Designation',
+      roleSkipper: 'Vessel Skipper / Fleet Captain',
+      roleOfficer: 'Fisheries / INCOIS Field Officer',
+      submitSignIn: 'Verify Credentials & Board Console',
+      submitRegister: 'Register Vessel & Issue Token',
+      quickDemo: 'Quick Inspection Credentials (SIH Evaluation):',
+      demoSkipper: 'Log in as Demo Skipper (Capt. Rajesh)',
+      demoOfficer: 'Log in as INCOIS Officer (Dr. Ananya)',
+      signOut: 'Sign Out',
+      signedInAs: 'Active Watch',
+      saveSector: 'Bookmark Sector',
+      savedSectors: 'Saved Fleet Sectors',
+      sectorBookmarked: 'Sector Bookmarked to Fleet Book',
+      authenticating: 'Verifying with Sagar Roads Security…'
     }
   },
   hi: {
@@ -229,6 +260,37 @@
       banActiveNotice: 'अनिवार्य मौसमी मत्स्यन प्रतिबंध सक्रिय: समुद्री मत्स्यन विनियमन अधिनियम के तहत 15 अप्रैल से 14 जून (61 दिन) तक पूर्वी तट पर यंत्रीकृत नौकायन कानूनी रूप से बंद है। महाद्वीपीय शेल्फ के सभी क्षेत्र बंद हैं।',
       footerText: 'पश्चिम बंगाल के तटीय जहाजों (यंत्रीकृत ट्रॉलर, मोटर चालित नौका, पारंपरिक डोंगी) के लिए कैलिब्रेटेड।',
       footerCredits: 'इसरो SIH26176 · टीम टेक टाइटन्स · ओरका सागर मित्र'
+    },
+    auth: {
+      signInTitle: 'फ्लीट प्रमाणीकरण एवं सुरक्षा जांच',
+      signInSub: 'नौका कप्तानों, समुद्री मत्स्य अधिकारियों और इनकोइस पर्यवेक्षकों के लिए अधिकृत प्रवेश।',
+      tabSignIn: 'नाविक / अधिकारी प्रवेश',
+      tabRegister: 'नई नौका पंजीकरण',
+      emailLabel: 'आधिकारिक ईमेल / ऑपरेटर आईडी',
+      emailPlaceholder: 'उदा. skipper@orca.gov.in',
+      passwordLabel: 'सुरक्षा पासवर्ड',
+      passwordPlaceholder: 'सुरक्षा पासवर्ड दर्ज करें (न्यूनतम 6 अक्षर)',
+      fullNameLabel: 'नाविक / अधिकारी का पूरा नाम',
+      fullNamePlaceholder: 'उदा. कैप्टन राजेश मोंडल',
+      vesselNameLabel: 'नौका का नाम व श्रेणी',
+      vesselNamePlaceholder: 'उदा. एफबी मां गंगा (WB-24-M-104)',
+      regNumberLabel: 'समुद्री पंजीकरण संख्या (MFRA)',
+      regNumberPlaceholder: 'उदा. IND-WB-24-00918',
+      harborLabel: 'मूल बंदरगाह / जेटी',
+      roleLabel: 'कर्तव्य पद',
+      roleSkipper: 'नौका कप्तान / नाविक',
+      roleOfficer: 'मत्स्य पालन / इनकोइस क्षेत्र अधिकारी',
+      submitSignIn: 'प्रमाणपत्र सत्यापित करें और प्रवेश करें',
+      submitRegister: 'नौका पंजीकृत करें व टोकन प्राप्त करें',
+      quickDemo: 'त्वरित मूल्यांकन लॉगिन (इसरो प्रस्तुति):',
+      demoSkipper: 'डेमो नाविक के रूप में लॉगिन (कैप्टन राजेश)',
+      demoOfficer: 'इनकोइस अधिकारी लॉगिन (डॉ. अनन्या)',
+      signOut: 'लॉग आउट',
+      signedInAs: 'सक्रिय ड्यूटी',
+      saveSector: 'क्षेत्र बुकमार्क करें',
+      savedSectors: 'सहेजे गए फ्लीट क्षेत्र',
+      sectorBookmarked: 'क्षेत्र फ्लीट बुक में सहेजा गया',
+      authenticating: 'सुरक्षा सत्यापन जारी है…'
     }
   },
   bn: {
@@ -345,6 +407,37 @@
       banActiveNotice: 'বাধ্যতামূলক মৌসুমি মাছ ধরার নিষেধাজ্ঞা সক্রিয়: সামুদ্রিক মৎস্য নিয়ন্ত্রণ আইনের অধীনে ১৫ এপ্রিল থেকে ১৪ জুন (৬১ দিন) পূর্ব উপকূলে যান্ত্রিক আহরণ আইনত বন্ধ। মহাদেশীয় শেল্ফের সকল খাত মাছ ধরার জন্য বন্ধ।',
       footerText: 'পশ্চিমবঙ্গের উপকূলীয় নৌকার (যান্ত্রিক ট্রলার, মোটরচালিত নৌকা, সাধারণ ডিঙি) জন্য বিশেষভাবে প্রস্তুত।',
       footerCredits: 'ইসরো SIH26176 · টিম টেক টাইটানস · ওরকা সাগর মিত্র'
+    },
+    auth: {
+      signInTitle: 'নৌবহর প্রমাণীকরণ ও সুরক্ষা প্রবেশ',
+      signInSub: 'জাহাজের মাঝি, সামুদ্রিক মৎস্য আধিকারিক এবং ইনকোইস উপকূলীয় পর্যবেক্ষকদের জন্য অনুমোদিত প্রবেশাধিকার।',
+      tabSignIn: 'মাঝি / আধিকারিক লগইন',
+      tabRegister: 'নতুন নৌযান নিবন্ধন',
+      emailLabel: 'অফিসিয়াল ইমেল / অপারেটর আইডি',
+      emailPlaceholder: 'যেমন: skipper@orca.gov.in',
+      passwordLabel: 'সুরক্ষা পাসওয়ার্ড',
+      passwordPlaceholder: 'সুরক্ষা পাসওয়ার্ড লিখুন (ন্যূনতম ৬ অক্ষর)',
+      fullNameLabel: 'মাঝি / আধিকারিকের পূর্ণ নাম',
+      fullNamePlaceholder: 'যেমন: ক্যাপ্টেন রাজেশ মণ্ডল',
+      vesselNameLabel: 'নৌযানের নাম ও শ্রেণি',
+      vesselNamePlaceholder: 'যেমন: এফবি মা গঙ্গা (WB-24-M-104)',
+      regNumberLabel: 'সামুদ্রিক নিবন্ধন নম্বর (MFRA)',
+      regNumberPlaceholder: 'যেমন: IND-WB-24-00918',
+      harborLabel: 'মূল বন্দর / জেটি ঘাট',
+      roleLabel: 'দায়িত্ব পদবি',
+      roleSkipper: 'নৌযান চালক / ক্যাপ্টেন',
+      roleOfficer: 'মৎস্য দপ্তর / ইনকোইস ক্ষেত্র আধিকারিক',
+      submitSignIn: 'পরিচয় যাচাই করে বোর্ডে প্রবেশ করুন',
+      submitRegister: 'নৌযান নিবন্ধন করুন ও টোকেন গ্রহণ করুন',
+      quickDemo: 'দ্রুত মূল্যায়ন লগইন (ইসরো উপস্থাপনা):',
+      demoSkipper: 'ডেমো মাঝি হিসেবে লগইন (ক্যাপ্টেন রাজেশ)',
+      demoOfficer: 'ইনকোইস আধিকারিক লগইন (ড. অনন্যা)',
+      signOut: 'লগ আউট',
+      signedInAs: 'সক্রিয় ডিউটি',
+      saveSector: 'খাত বুকমার্ক করুন',
+      savedSectors: 'সংরক্ষিত নৌবহর খাতসমূহ',
+      sectorBookmarked: 'খাতটি ফ্লিট বইয়ে সংরক্ষিত হয়েছে',
+      authenticating: 'সুরক্ষা যাচাইকরণ চলছে…'
     }
   }
 }

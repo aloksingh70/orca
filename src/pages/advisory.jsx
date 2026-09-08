@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Waves, Wind, Fish, ShieldAlert, AlertOctagon, Anchor, Compass } from 'lucide-react'
+import { ArrowLeft, Waves, Wind, Fish, ShieldAlert, AlertOctagon, Anchor, Compass, Bookmark, Radio, ArrowRight } from 'lucide-react'
 import Navbar from '../components/Navbar.jsx'
 import ScanButton from '../components/ScanButton.jsx'
 import ScenarioDatePicker from '../components/ScenarioDatePicker.jsx'
@@ -9,15 +9,18 @@ import ReasoningTrace from '../components/ReasoningTrace.jsx'
 import { zones } from '../lib/zones.js'
 import { scanCoastline } from '../lib/agents.js'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
 export default function Advisory() {
   const { t } = useLanguage()
+  const { token, savedZones, toggleSaveZone, isAuthenticated } = useAuth()
   const [scanDate, setScanDate] = useState(todayStr())
   const [scanning, setScanning] = useState(false)
   const [results, setResults] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
+  const [backendLive, setBackendLive] = useState(false)
 
   const bridgeStations = [
     { key: 'ocean', icon: Waves, color: 'text-emerald-600', label: t('stations', 'oceanName'), sub: t('stations', 'oceanSub') },
@@ -26,12 +29,38 @@ export default function Advisory() {
     { key: 'sustain', icon: ShieldAlert, color: 'text-red-600', label: t('stations', 'sustainName'), sub: t('stations', 'sustainSub') }
   ]
 
-  const runScan = (date = scanDate, delay = 900) => {
+  const runScan = async (date = scanDate, delay = 600) => {
     setScanning(true)
+
+    // Attempt scan via FastAPI backend first
+    try {
+      const headers = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const res = await fetch('/api/advisory/scan', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ date })
+      })
+
+      if (res.ok) {
+        const backendData = await res.json()
+        setResults(backendData)
+        setSelectedId(backendData[0]?.zoneId ?? null)
+        setBackendLive(true)
+        setScanning(false)
+        return
+      }
+    } catch (err) {
+      console.warn('Backend unavailable, using client-side fallback:', err)
+    }
+
+    // Fallback to client-side deterministic evaluation
     setTimeout(() => {
       const scanned = scanCoastline(zones, date)
       setResults(scanned)
       setSelectedId(scanned[0]?.zoneId ?? null)
+      setBackendLive(false)
       setScanning(false)
     }, delay)
   }
@@ -69,8 +98,20 @@ export default function Advisory() {
             <ArrowLeft size={14} className="text-[#007A78]" />
             <span>{t('nav', 'returnDispatch')}</span>
           </Link>
-          <div className="text-xs text-[#5C7788] tabular-nums hidden sm:block font-mono">
-            <span>{t('nav', 'sectorLabel')}</span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold flex items-center gap-1.5 border ${
+                backendLive
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-slate-100 text-slate-600 border-slate-300'
+              }`}
+            >
+              <Radio size={11} className={backendLive ? 'text-emerald-600 animate-pulse' : 'text-slate-400'} />
+              <span>{backendLive ? 'FastAPI Telemetry: Online' : 'Client Mode: Active'}</span>
+            </span>
+            <div className="text-xs text-[#5C7788] tabular-nums hidden sm:block font-mono">
+              <span>{t('nav', 'sectorLabel')}</span>
+            </div>
           </div>
         </div>
 
@@ -182,9 +223,58 @@ export default function Advisory() {
             </div>
 
             {/* Right Column (7 cols): Detailed Sector Advisory & Reasoning Manifest */}
-            <div className="lg:col-span-7 lg:sticky lg:top-24">
+            <div className="lg:col-span-7 lg:sticky lg:top-24 flex flex-col gap-3">
               {selected ? (
-                <ReasoningTrace result={selected} />
+                <>
+                  <ReasoningTrace result={selected} />
+
+                  {/* Bookmark Sector Card */}
+                  <div className="bg-white border border-[#CCE4EC] p-3.5 flex items-center justify-between text-xs shadow-xs rounded">
+                    <div className="flex items-center gap-2.5">
+                      <Bookmark
+                        size={17}
+                        className={
+                          savedZones.includes(selected.zoneId)
+                            ? 'text-[#007A78] fill-[#007A78]'
+                            : 'text-[#5C7788]'
+                        }
+                      />
+                      <div>
+                        <div className="font-bold text-[#0A1B27]">
+                          {savedZones.includes(selected.zoneId)
+                            ? t('auth', 'sectorBookmarked')
+                            : t('auth', 'saveSector')}
+                        </div>
+                        <div className="text-[11px] text-[#5C7788]">
+                          {selected.zoneName} · Sector {selected.sectorCode}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isAuthenticated ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleSaveZone(selected.zoneId)}
+                        className={`px-3 py-1.5 font-bold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer flex items-center gap-1.5 ${
+                          savedZones.includes(selected.zoneId)
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
+                            : 'bg-[#007A78] text-white hover:bg-[#006361]'
+                        }`}
+                      >
+                        <Bookmark size={13} className={savedZones.includes(selected.zoneId) ? 'fill-current' : ''} />
+                        <span>{savedZones.includes(selected.zoneId) ? 'Bookmarked' : 'Save to Ledger'}</span>
+                      </button>
+                    ) : (
+                      <Link
+                        to="/login"
+                        className="text-[#007A78] hover:underline font-bold text-xs flex items-center gap-1"
+                      >
+                        <span>Sign In to Save</span>
+                        <ArrowRight size={12} />
+                      </Link>
+                    )}
+                  </div>
+                </>
               ) : (
                 <div className="bg-white border border-[#CCE4EC] p-8 text-center text-xs text-[#5C7788]">
                   {t('advisory', 'selectPrompt')}

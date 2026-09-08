@@ -1,4 +1,4 @@
-﻿# Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -29,3 +29,21 @@ dist-ssr
 .env.test.local
 .env.production.local
 .env.local
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+backend/venv/
+*.venv
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+

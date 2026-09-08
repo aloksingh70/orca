@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
+import AnimatedShowcase from '../components/AnimatedShowcase.jsx'
 import Logo from '../components/Logo.jsx'
 import { zones } from '../lib/zones.js'
 import { useLanguage } from '../context/LanguageContext.jsx'
@@ -80,6 +81,7 @@ export default function Landing() {
     <div className="min-h-screen font-sans">
       <Navbar />
       <Hero />
+      <AnimatedShowcase />
 
       {/* ========================================================================= */}
       {/* SECTION 2: OPERATIONAL REALITY (THE BLIND VOYAGE VS THE ORCA SHIELD)       */}

@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Compass } from 'lucide-react'
+import { Menu, X, Compass, KeyRound, LogOut, Ship, ShieldCheck } from 'lucide-react'
 import Logo from './Logo.jsx'
 import LanguageSelector from './LanguageSelector.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [timeStr, setTimeStr] = useState('')
   const location = useLocation()
   const isAdvisory = location.pathname === '/advisory'
+  const isLogin = location.pathname === '/login'
   const { t } = useLanguage()
+  const { user, isAuthenticated, logout } = useAuth()
 
   const navLinks = [
     { label: t('nav', 'operationalTransition'), href: '/#operational-reality' },
@@ -98,6 +101,52 @@ export default function Navbar() {
           {/* Language Selector Dropdown Menu */}
           <LanguageSelector />
 
+          {/* User Auth Status / Sign In Button */}
+          {isAuthenticated ? (
+            <div className="hidden sm:flex items-center gap-2 bg-[#E2F0F5] border border-[#BCDCE6] py-1 px-2.5 rounded-lg text-xs shadow-2xs">
+              <div className="flex items-center gap-1.5 font-bold text-[#0A1B27]">
+                {user?.role === 'officer' ? (
+                  <>
+                    <ShieldCheck size={14} className="text-[#E86014]" />
+                    <span className="text-[9px] bg-[#E86014]/15 text-[#E86014] font-bold px-1 py-0.5 rounded font-mono">
+                      OFFICER
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Ship size={14} className="text-[#007A78]" />
+                    <span className="text-[9px] bg-[#007A78]/15 text-[#007A78] font-bold px-1 py-0.5 rounded font-mono">
+                      {user?.role === 'researcher' ? 'RESEARCH' : 'SKIPPER'}
+                    </span>
+                  </>
+                )}
+                <span className="truncate max-w-[130px]" title={user?.vessel_name || user?.full_name}>
+                  {user?.role === 'officer' ? user?.full_name : (user?.vessel_name || user?.full_name)}
+                </span>
+              </div>
+              <span className="text-[#BCDCE6]">|</span>
+              <button
+                type="button"
+                onClick={logout}
+                title="Sign Out"
+                className="text-[#5C7788] hover:text-red-700 transition-colors p-0.5 cursor-pointer"
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+          ) : (
+            !isLogin && (
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1.5 border border-[#007A78] text-[#007A78] hover:bg-[#007A78] hover:text-white px-3 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs rounded-xs"
+              >
+                <KeyRound size={13} />
+                <span className="hidden xs:inline">{t('auth', 'tabSignIn').split(' ')[0]}</span>
+                <span>Sign In</span>
+              </Link>
+            )
+          )}
+
           {!isAdvisory ? (
             <Link
               to="/advisory"
@@ -137,6 +186,43 @@ export default function Navbar() {
             </span>
             <LanguageSelector compact={false} />
           </div>
+
+          {/* Mobile User Profile or Login */}
+          {isAuthenticated ? (
+            <div className="flex items-center justify-between bg-[#E2F0F5] border border-[#BCDCE6] p-2.5 rounded text-xs">
+              <div className="flex items-center gap-2 font-bold text-[#0A1B27]">
+                {user?.role === 'officer' ? (
+                  <ShieldCheck size={16} className="text-[#E86014]" />
+                ) : (
+                  <Ship size={16} className="text-[#007A78]" />
+                )}
+                <div>
+                  <div>{user?.full_name}</div>
+                  <div className="text-[10px] text-[#5C7788] font-normal">{user?.vessel_name || user?.role}</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  logout()
+                  setOpen(false)
+                }}
+                className="text-xs font-bold text-red-700 bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-50"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="flex items-center justify-center gap-2 bg-[#007A78] text-white py-2 px-3 rounded text-xs font-bold uppercase tracking-wider"
+              onClick={() => setOpen(false)}
+            >
+              <KeyRound size={14} />
+              <span>Fleet Sign In / Register</span>
+            </Link>
+          )}
+
           {navLinks.map((link) => (
             <a
               key={link.label}
