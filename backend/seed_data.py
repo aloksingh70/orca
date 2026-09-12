@@ -246,6 +246,17 @@ def seed_database(db: Session = None):
                 "harbor_base": "Digha Marine Station",
                 "vessel_name": "RV Sindhu Sadhana Observer",
                 "registration_number": "NIO-RES-409"
+            },
+            {
+                "email": "portmaster@sagar.port.gov.in",
+                "full_name": "Capt. B. K. Halder",
+                "role": "port_crew",
+                "officer_type": None,
+                "govt_id_number": "PORT-SAGAR-01",
+                "department": "Kolkata Port Trust & Sagar Anchorage Maritime Board",
+                "harbor_base": "Sagar Roads Anchorage",
+                "vessel_name": "Pilot Vessel Sagar Sandhya",
+                "registration_number": "PORT-SAGAR-01"
             }
         ]
 

@@ -25,7 +25,9 @@ export const zones = [
     baseWave: 1.1,
     nearProtectedArea: false,
     peakCatch: 620,
-    seasonalCatchIndex: [340, 360, 410, 480, 520, 560, 600, 620, 580, 500, 420, 370]
+    seasonalCatchIndex: [340, 360, 410, 480, 520, 560, 600, 620, 580, 500, 420, 370],
+    seasonalSSTIndex: [26.8, 27.2, 28.1, 29.4, 30.1, 29.2, 28.4, 28.2, 28.6, 28.8, 27.8, 26.9],
+    seasonalChlorophyllIndex: [1.15, 1.22, 1.35, 1.48, 1.62, 2.10, 2.45, 2.52, 2.18, 1.74, 1.38, 1.20]
   },
   {
     id: 'shankarpur',
@@ -44,7 +46,9 @@ export const zones = [
     baseWave: 1.2,
     nearProtectedArea: false,
     peakCatch: 580,
-    seasonalCatchIndex: [320, 350, 390, 460, 500, 540, 580, 560, 520, 460, 400, 350]
+    seasonalCatchIndex: [320, 350, 390, 460, 500, 540, 580, 560, 520, 460, 400, 350],
+    seasonalSSTIndex: [26.6, 27.0, 27.9, 29.1, 29.8, 28.9, 28.1, 28.0, 28.3, 28.5, 27.5, 26.7],
+    seasonalChlorophyllIndex: [1.25, 1.34, 1.48, 1.65, 1.82, 2.30, 2.68, 2.75, 2.36, 1.90, 1.52, 1.31]
   },
   {
     id: 'junput',
@@ -63,7 +67,9 @@ export const zones = [
     baseWave: 1.3,
     nearProtectedArea: false,
     peakCatch: 540,
-    seasonalCatchIndex: [300, 320, 360, 420, 460, 500, 540, 520, 470, 410, 360, 320]
+    seasonalCatchIndex: [300, 320, 360, 420, 460, 500, 540, 520, 470, 410, 360, 320],
+    seasonalSSTIndex: [27.1, 27.5, 28.4, 29.7, 30.4, 29.5, 28.7, 28.5, 28.9, 29.1, 28.1, 27.2],
+    seasonalChlorophyllIndex: [1.02, 1.10, 1.20, 1.32, 1.45, 1.85, 2.15, 2.22, 1.92, 1.55, 1.24, 1.08]
   },
   {
     id: 'sagar-island',
@@ -82,7 +88,9 @@ export const zones = [
     baseWave: 1.5,
     nearProtectedArea: true,
     peakCatch: 700,
-    seasonalCatchIndex: [400, 430, 480, 540, 590, 630, 680, 700, 650, 560, 470, 410]
+    seasonalCatchIndex: [400, 430, 480, 540, 590, 630, 680, 700, 650, 560, 470, 410],
+    seasonalSSTIndex: [26.4, 26.8, 27.6, 28.8, 29.5, 28.6, 27.9, 27.7, 28.1, 28.3, 27.2, 26.5],
+    seasonalChlorophyllIndex: [1.45, 1.58, 1.76, 2.02, 2.28, 2.85, 3.25, 3.32, 2.94, 2.38, 1.82, 1.52]
   },
   {
     id: 'frazerganj',
@@ -101,7 +109,9 @@ export const zones = [
     baseWave: 1.3,
     nearProtectedArea: true,
     peakCatch: 610,
-    seasonalCatchIndex: [350, 380, 420, 480, 520, 560, 600, 610, 570, 490, 420, 370]
+    seasonalCatchIndex: [350, 380, 420, 480, 520, 560, 600, 610, 570, 490, 420, 370],
+    seasonalSSTIndex: [26.7, 27.1, 28.0, 29.2, 29.9, 29.0, 28.2, 28.1, 28.4, 28.6, 27.6, 26.8],
+    seasonalChlorophyllIndex: [1.32, 1.44, 1.60, 1.84, 2.08, 2.58, 2.95, 3.02, 2.65, 2.12, 1.65, 1.40]
   },
   {
     id: 'kakdwip',
@@ -120,7 +130,9 @@ export const zones = [
     baseWave: 1.6,
     nearProtectedArea: false,
     peakCatch: 660,
-    seasonalCatchIndex: [380, 400, 450, 510, 550, 600, 640, 660, 610, 530, 450, 390]
+    seasonalCatchIndex: [380, 400, 450, 510, 550, 600, 640, 660, 610, 530, 450, 390],
+    seasonalSSTIndex: [26.2, 26.6, 27.4, 28.6, 29.3, 28.4, 27.6, 27.5, 27.9, 28.1, 27.0, 26.3],
+    seasonalChlorophyllIndex: [1.55, 1.70, 1.92, 2.20, 2.48, 3.10, 3.52, 3.60, 3.18, 2.55, 1.98, 1.65]
   }
 ]
 

@@ -1,5 +1,6 @@
-export default function AgentGauge({ score, vetoed = false, showTicks = true }) {
+export default function AgentGauge({ agentName = 'Agent', score, vetoed = false, showTicks = true }) {
   const width = Math.max(0, Math.min(100, score))
+  const displayScore = Math.round(width)
   
   let barColor = 'bg-emerald-600'
   if (vetoed) {
@@ -12,7 +13,14 @@ export default function AgentGauge({ score, vetoed = false, showTicks = true }) 
 
   return (
     <div className="w-full flex flex-col gap-1">
-      <div className="relative w-full bg-slate-200 border border-slate-300 h-2.5 rounded-full overflow-hidden">
+      <div
+        role="progressbar"
+        aria-valuenow={displayScore}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${agentName} score: ${displayScore} out of 100${vetoed ? ' (Vetoed)' : ''}`}
+        className="relative w-full bg-slate-200 border border-slate-300 h-2.5 rounded-full overflow-hidden"
+      >
         {/* Fill */}
         <div
           className={`h-full transition-all duration-500 ${barColor}`}

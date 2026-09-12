@@ -19,6 +19,8 @@ import {
 import Navbar from '../components/Navbar.jsx'
 import Hero from '../components/Hero.jsx'
 import AnimatedShowcase from '../components/AnimatedShowcase.jsx'
+import FAQ from '../components/FAQ.jsx'
+import PageMeta from '../components/PageMeta.jsx'
 import Logo from '../components/Logo.jsx'
 import { zones } from '../lib/zones.js'
 import { useLanguage } from '../context/LanguageContext.jsx'
@@ -79,9 +81,15 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen font-sans">
+      <PageMeta
+        title="ORCA — Marine Fishing Zone Advisory | SIH26176"
+        description="Operational marine harvesting advisory and explainable AI safety intelligence for coastal fishermen across the Bay of Bengal."
+      />
       <Navbar />
-      <Hero />
-      <AnimatedShowcase />
+
+      <main id="main-content" tabIndex={-1} className="outline-none">
+        <Hero />
+        <AnimatedShowcase />
 
       {/* ========================================================================= */}
       {/* SECTION 2: OPERATIONAL REALITY (THE BLIND VOYAGE VS THE ORCA SHIELD)       */}
@@ -430,19 +438,19 @@ export default function Landing() {
       {/* ========================================================================= */}
       {/* SECTION 6: DIRECT FIELD DEPLOYMENT BANNER & ISRO SPECIFICATIONS           */}
       {/* ========================================================================= */}
-      <section className="py-16 px-4 sm:px-6 bg-[#061219] text-white border-b border-slate-800">
+      <section className="py-16 px-4 sm:px-6 bg-[#EAF4F8] text-[#2D4454] border-b border-[#CCE4EC]">
         <div className="max-w-7xl mx-auto">
           
           {/* Main Field Deployment Callout matching screenshot */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-12 mb-12 border-b border-slate-800">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-12 mb-12 border-b border-[#CCE4EC]">
             <div className="max-w-2xl">
               <span className="text-[#007A78] text-xs font-mono font-bold tracking-wider uppercase block mb-2">
                 DIRECT FIELD DEPLOYMENT
               </span>
-              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white mb-2.5">
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0A1B27] mb-2.5">
                 Take the Live Advisory Console to Sea.
               </h2>
-              <p className="text-sm text-[#A4B8C4] leading-relaxed">
+              <p className="text-sm text-[#5C7788] leading-relaxed">
                 High-contrast, zero-lag console built for sunlight legibility on low-cost skiff phones and wheelhouse terminals. Works offline cached when past cellular range.
               </p>
             </div>
@@ -450,13 +458,13 @@ export default function Landing() {
             <div className="flex flex-wrap items-center gap-3.5">
               <Link
                 to="/advisory"
-                className="bg-[#007A78] hover:bg-[#006664] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-md"
+                className="bg-[#007A78] hover:bg-[#006361] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-98"
               >
                 Launch Working Console
               </Link>
               <a
                 href="#zones"
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors"
+                className="bg-white hover:bg-slate-50 text-[#0A1B27] border border-[#CCE4EC] px-6 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors shadow-2xs"
               >
                 Download 7-Day Tide Tables
               </a>
@@ -465,33 +473,33 @@ export default function Landing() {
 
           {/* Prototype Architecture Specs */}
           <div className="grid md:grid-cols-3 gap-5">
-            <div className="bg-[#0A1A26] border border-slate-800 p-5 flex flex-col gap-2">
+            <div className="bg-white border border-[#CCE4EC] p-5 flex flex-col gap-2 rounded-xl shadow-xs hover:border-[#007A78] transition-all">
               <div className="flex items-center gap-2 text-[#007A78] text-xs font-semibold font-serif">
                 <Layers size={15} />
                 <span>Deterministic Seeded Engine</span>
               </div>
-              <p className="text-xs text-[#A4B8C4] leading-relaxed">
+              <p className="text-xs text-[#5C7788] leading-relaxed">
                 The four agents evaluate via a reproducible mulberry32 seeded PRNG client-side. The exact same date and sector yield identical, auditable readings.
               </p>
             </div>
 
-            <div className="bg-[#0A1A26] border border-slate-800 p-5 flex flex-col gap-2">
+            <div className="bg-white border border-[#CCE4EC] p-5 flex flex-col gap-2 rounded-xl shadow-xs hover:border-[#E86014] transition-all">
               <div className="flex items-center gap-2 text-[#E86014] text-xs font-semibold font-serif">
                 <ServerCog size={15} />
                 <span>Calibrated Indian Marine Telemetry</span>
               </div>
-              <p className="text-xs text-[#A4B8C4] leading-relaxed">
+              <p className="text-xs text-[#5C7788] leading-relaxed">
                 SST, chlorophyll-a, wind squall limits, and catch densities are calibrated to real Bay of Bengal parameters (OCM-3 / INCOIS and IMD coastal models).
               </p>
             </div>
 
-            <div className="bg-[#0A1A26] border border-slate-800 p-5 flex flex-col gap-2">
-              <div className="flex items-center gap-2 text-[#D4881A] text-xs font-semibold font-serif">
+            <div className="bg-white border border-[#CCE4EC] p-5 flex flex-col gap-2 rounded-xl shadow-xs hover:border-amber-500 transition-all">
+              <div className="flex items-center gap-2 text-amber-700 text-xs font-semibold font-serif">
                 <Terminal size={15} />
                 <span>Clean Modular Architecture</span>
               </div>
-              <p className="text-xs text-[#A4B8C4] leading-relaxed">
-                All agent scoring logic resides strictly in <code className="text-[#E86014]">agents.js</code>. Swapping simulated feeds for live INCOIS/IMD endpoints requires zero changes to the UI.
+              <p className="text-xs text-[#5C7788] leading-relaxed">
+                All agent scoring logic resides strictly in <code className="text-[#007A78] bg-[#E2F0F5] px-1.5 py-0.5 rounded font-mono">agents.js</code>. Swapping simulated feeds for live INCOIS/IMD endpoints requires zero changes to the UI.
               </p>
             </div>
           </div>
@@ -500,19 +508,29 @@ export default function Landing() {
       </section>
 
       {/* ========================================================================= */}
+      {/* SECTION 6: FREQUENTLY ANSWERED INQUIRIES (FAQ ACCORDION)                   */}
+      {/* ========================================================================= */}
+      <FAQ />
+      </main>
+
+      {/* ========================================================================= */}
       {/* FOOTER (MATCHING BOTTOM BAR IN SCREENSHOT)                                 */}
       {/* ========================================================================= */}
-      <footer className="py-6 px-4 sm:px-6 bg-[#061219] text-[11px] text-[#5C7788] border-t border-slate-900">
+      <footer className="py-6 px-4 sm:px-6 bg-[#E2F0F5] text-[11px] text-[#5C7788] border-t border-[#BCDCE6]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#007A78]" />
-            <span className="font-semibold text-slate-300">DATUM WGS-84 / CHART DATUM LAT</span>
+            <span className="font-semibold text-[#0A1B27]">DATUM WGS-84 / CHART DATUM LAT</span>
             <span>·</span>
             <span>Hydrography Survey Baseline: Survey of India &amp; IHO Standards</span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-400">
-            <span>IMD &amp; INCOIS Marine Telemetry Stream — Live</span>
+          <div className="flex items-center gap-4 text-[#5C7788]">
+            <a href="#faq" className="hover:text-[#007A78]">FAQ</a>
+            <span>·</span>
+            <Link to="/methodology" className="hover:text-[#007A78]">Methodology</Link>
+            <span>·</span>
+            <Link to="/advisory" className="hover:text-[#007A78]">Advisory Console</Link>
             <span>·</span>
             <span>© 2026 ORCA Coastal Authority</span>
           </div>

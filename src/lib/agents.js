@@ -15,6 +15,15 @@
  * rewriting the bodies of the four `run*Agent` functions only.
  * ---------------------------------------------------------------------------
  */
+import { zones as allZones } from './zones.js'
+
+function resolveZone(rawZone) {
+  if (!rawZone) return allZones[0]
+  const zoneId = rawZone.id || rawZone.zoneId
+  const match = allZones.find((z) => z.id === zoneId)
+  if (match) return { ...match, ...rawZone, id: match.id, name: match.name }
+  return rawZone
+}
 
 // -- Deterministic seeded PRNG (mulberry32) ----------------------------------
 // A "scan" for a given zone+date always produces the same numbers until the
@@ -51,14 +60,18 @@ const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, n))
 // -----------------------------------------------------------------------------
 // 1. Ocean Agent — SST + chlorophyll -> feeding-activity likelihood
 // -----------------------------------------------------------------------------
-function runOceanAgent(zone, dateStr) {
+function runOceanAgent(rawZone, dateStr) {
+  const zone = resolveZone(rawZone)
   const r1 = seededRandom(zone.id, dateStr, 'sst')
   const r2 = seededRandom(zone.id, dateStr, 'chl')
 
+  const baseSST = zone.baseSST ?? zone.base_sst ?? 28.5
+  const baseChlorophyll = zone.baseChlorophyll ?? zone.base_chlorophyll ?? 1.5
+
   // SST realistic band for the Bay of Bengal coastal waters (°C)
-  const sst = +(zone.baseSST + (r1 - 0.5) * 3).toFixed(1)
+  const sst = +(baseSST + (r1 - 0.5) * 3).toFixed(1)
   // Chlorophyll-a concentration (mg/m^3) — higher often means more plankton/fish activity
-  const chlorophyll = +(zone.baseChlorophyll + (r2 - 0.5) * 1.2).toFixed(2)
+  const chlorophyll = +(baseChlorophyll + (r2 - 0.5) * 1.2).toFixed(2)
 
   // Fish feeding activity tends to peak in a mid-range SST band (27-30°C)
   // and rises with chlorophyll concentration up to a point.
@@ -90,12 +103,16 @@ function runOceanAgent(zone, dateStr) {
 // -----------------------------------------------------------------------------
 // 2. Weather Agent — wind speed + wave height -> safety-to-sail score
 // -----------------------------------------------------------------------------
-function runWeatherAgent(zone, dateStr) {
+function runWeatherAgent(rawZone, dateStr) {
+  const zone = resolveZone(rawZone)
   const r1 = seededRandom(zone.id, dateStr, 'wind')
   const r2 = seededRandom(zone.id, dateStr, 'wave')
 
-  const windSpeed = +(zone.baseWind + (r1 - 0.5) * 14).toFixed(1) // km/h
-  const waveHeight = +(zone.baseWave + (r2 - 0.5) * 1.2).toFixed(1) // meters
+  const baseWind = zone.baseWind ?? zone.base_wind ?? 19
+  const baseWave = zone.baseWave ?? zone.base_wave ?? 1.2
+
+  const windSpeed = +(baseWind + (r1 - 0.5) * 14).toFixed(1) // km/h
+  const waveHeight = +(baseWave + (r2 - 0.5) * 1.2).toFixed(1) // meters
 
   // Small mechanized/traditional fishing boats: risk rises sharply past
   // ~25 km/h wind and ~1.5m wave height.
@@ -132,15 +149,18 @@ function runWeatherAgent(zone, dateStr) {
 // -----------------------------------------------------------------------------
 // 3. History Agent — seasonal/historical catch record for this zone + month
 // -----------------------------------------------------------------------------
-function runHistoryAgent(zone, dateStr) {
+function runHistoryAgent(rawZone, dateStr) {
+  const zone = resolveZone(rawZone)
   const date = new Date(dateStr)
   const month = date.getMonth() // 0-11
   const r = seededRandom(zone.id, dateStr, 'catch')
 
   // Each zone carries a 12-slot seasonal catch index (kg/trip, illustrative)
-  const seasonalIndex = zone.seasonalCatchIndex[month]
+  const catchArr = zone.seasonalCatchIndex ?? zone.seasonal_catch_index ?? [340, 360, 410, 480, 520, 560, 600, 620, 580, 500, 420, 370]
+  const seasonalIndex = catchArr[month] ?? 450
+  const peakCatch = zone.peakCatch ?? zone.peak_catch ?? 600
   const catchEstimate = Math.round(seasonalIndex * (0.85 + r * 0.3))
-  const score = clamp((catchEstimate / zone.peakCatch) * 100)
+  const score = clamp((catchEstimate / peakCatch) * 100)
 
   const monthName = date.toLocaleString('en-US', { month: 'long' })
 
@@ -159,7 +179,7 @@ function runHistoryAgent(zone, dateStr) {
     score: Math.round(score),
     readouts: [
       { label: 'Avg. Catch (this month)', value: `${catchEstimate} kg/trip` },
-      { label: 'Zone Seasonal Peak', value: `${zone.peakCatch} kg/trip` }
+      { label: 'Zone Seasonal Peak', value: `${peakCatch} kg/trip` }
     ],
     summary
   }
@@ -177,10 +197,11 @@ function isInBanWindow(date) {
   return date >= banStart && date <= banEnd
 }
 
-function runSustainabilityAgent(zone, dateStr) {
+function runSustainabilityAgent(rawZone, dateStr) {
+  const zone = resolveZone(rawZone)
   const date = new Date(dateStr)
   const inBan = isInBanWindow(date)
-  const nearProtected = zone.nearProtectedArea
+  const nearProtected = Boolean(zone.nearProtectedArea ?? zone.near_protected_area)
 
   let score
   let summary
@@ -251,10 +272,11 @@ function orchestrate(zone, ocean, weather, history, sustain) {
  * The single entry point the UI calls. Returns everything the advisory tool
  * needs to render a zone card + its reasoning trace panel.
  *
- * @param {object} zone - one entry from zones.js
+ * @param {object} zone - one entry from zones.js or ScanResult
  * @param {Date|string} date - the scenario date (defaults to today)
  */
-export function runAgents(zone, date = new Date()) {
+export function runAgents(rawZone, date = new Date()) {
+  const zone = resolveZone(rawZone)
   const dateObj = typeof date === 'string' ? new Date(date) : date
   const dateStr = dateObj.toISOString().slice(0, 10)
 
@@ -266,16 +288,16 @@ export function runAgents(zone, date = new Date()) {
   const { combinedScore, verdict, orchestratorNote } = orchestrate(zone, ocean, weather, history, sustain)
 
   return {
-    zoneId: zone.id,
-    zoneName: zone.name,
-    sectorCode: zone.sectorCode ?? 'WB',
-    distanceOffshore: zone.distanceOffshore,
-    soundingDepth: zone.soundingDepth ?? 15,
+    zoneId: zone.id ?? zone.zoneId,
+    zoneName: zone.name ?? zone.zoneName,
+    sectorCode: zone.sectorCode ?? zone.sector_code ?? 'WB',
+    distanceOffshore: zone.distanceOffshore ?? zone.distance_offshore ?? '10 km',
+    soundingDepth: zone.soundingDepth ?? zone.sounding_depth ?? 15,
     seabed: zone.seabed ?? 'Silt & mud substrate',
     coordinates: zone.coordinates ?? "21°30'N, 88°00'E",
-    coastalDistrict: zone.coastalDistrict ?? 'West Bengal Coast',
-    harborName: zone.harborName ?? 'Coastal Jetty',
-    fleetType: zone.fleetType ?? 'Small mechanized craft',
+    coastalDistrict: zone.coastalDistrict ?? zone.coastal_district ?? 'West Bengal Coast',
+    harborName: zone.harborName ?? zone.harbor_name ?? 'Coastal Jetty',
+    fleetType: zone.fleetType ?? zone.fleet_type ?? 'Small mechanized craft',
     date: dateStr,
     combinedScore,
     verdict,

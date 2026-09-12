@@ -25,19 +25,29 @@ import {
 } from 'lucide-react'
 import Navbar from '../components/Navbar.jsx'
 import SSOButtons from '../components/SSOButtons.jsx'
+import DemoLoginGrid from '../components/DemoLoginGrid.jsx'
+import { DEMO_USERS } from '../lib/demoUsers.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import PageMeta from '../components/PageMeta.jsx'
 
 export default function Login() {
-  const { login, register, officerVerify, ssoLogin, isAuthenticated, user } = useAuth()
+  const { login, register, officerVerify, ssoLogin, isAuthenticated, user, activeRole, setActiveRole } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
 
   // Steps: 'role_select' -> 'credentials' -> 'verified_welcome'
   const [currentStep, setCurrentStep] = useState('role_select')
-  const [selectedRole, setSelectedRole] = useState('officer') // 'officer' | 'skipper' | 'researcher' | 'port_crew'
+  const [loginMode, setLoginMode] = useState('demo') // 'demo' | 'manual'
+  const [authenticatingEmail, setAuthenticatingEmail] = useState(null)
+  const [selectedRole, setSelectedRole] = useState(() => activeRole || 'officer') // 'officer' | 'skipper' | 'researcher' | 'port_crew'
   const [officerType, setOfficerType] = useState('incois_scientist') // 'incois_scientist' | 'coast_guard' | 'fisheries_officer' | 'port_master'
+
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role)
+    if (setActiveRole) setActiveRole(role)
+  }
 
   const [submitting, setSubmitting] = useState(false)
   const [verifyingGovtId, setVerifyingGovtId] = useState(false)
@@ -102,6 +112,54 @@ export default function Login() {
     }
   ]
 
+  // 1-Click Instant Demo Authentication
+  const handleInstantDemoLogin = async (demoUser) => {
+    setErrorMsg('')
+    setSubmitting(true)
+    setAuthenticatingEmail(demoUser.email)
+
+    try {
+      const verifiedUser = await login(demoUser.email, demoUser.password || 'orca123')
+      
+      // Configure clearance pass for presentation
+      setClearancePass({
+        user: verifiedUser,
+        role: verifiedUser.role || demoUser.role,
+        officerType: verifiedUser.officer_type || demoUser.officerType,
+        govtIdNumber: verifiedUser.govt_id_number || verifiedUser.registration_number || demoUser.badgeOrReg || 'VERIFIED-IND',
+        timestamp: new Date().toLocaleTimeString('en-GB') + ' IST'
+      })
+      setCurrentStep('verified_welcome')
+    } catch (err) {
+      setErrorMsg(err.message || 'Demo authentication failed. Please verify credentials.')
+    } finally {
+      setSubmitting(false)
+      setAuthenticatingEmail(null)
+    }
+  }
+
+  // Pre-fill Form for Manual Testing
+  const handleFillCredentials = (demoUser) => {
+    setErrorMsg('')
+    setSelectedRole(demoUser.role)
+    if (demoUser.officerType) {
+      setOfficerType(demoUser.officerType)
+    }
+    setFormData({
+      email: demoUser.email,
+      password: demoUser.password || 'orca123',
+      fullName: demoUser.name,
+      govtIdNumber: demoUser.badgeOrReg || '',
+      department: demoUser.cadre || '',
+      vesselName: demoUser.vesselOrStation || '',
+      regNumber: demoUser.badgeOrReg || '',
+      harborBase: demoUser.vesselOrStation || 'Sagar Roads Station',
+      isNewAccount: false
+    })
+    setLoginMode('manual')
+    setCurrentStep('credentials')
+  }
+
   // Auto fill demo accounts
   const handleQuickDemoFill = (type, customOfficerType = null) => {
     setErrorMsg('')
@@ -146,6 +204,20 @@ export default function Login() {
         vesselName: 'RV Sindhu Sadhana Observer',
         regNumber: 'NIO-RES-409',
         harborBase: 'Digha Marine Station',
+        isNewAccount: false
+      })
+      setCurrentStep('credentials')
+    } else if (type === 'port_crew') {
+      setSelectedRole('port_crew')
+      setFormData({
+        email: 'portmaster@sagar.port.gov.in',
+        password: 'orca123',
+        fullName: 'Capt. B. K. Halder',
+        govtIdNumber: 'PORT-SAGAR-01',
+        department: 'Kolkata Port Trust & Sagar Anchorage Maritime Board',
+        vesselName: 'Pilot Vessel Sagar Sandhya',
+        regNumber: 'PORT-SAGAR-01',
+        harborBase: 'Sagar Roads Anchorage',
         isNewAccount: false
       })
       setCurrentStep('credentials')
@@ -268,256 +340,316 @@ export default function Login() {
 
   return (
     <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454]">
+      <PageMeta
+        title="Sign In — ORCA Marine Portal"
+        description="Authenticate with official marine credentials, demo personas, or single sign-on to access the ORCA maritime command console."
+      />
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 pt-24 pb-16 flex flex-col justify-center">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 pt-24 pb-16 flex flex-col justify-center outline-none">
         
         {/* Quick Demo Credential Bar (SIH Evaluation Mode) */}
-        <div className="bg-[#E2F0F5] border border-[#BCDCE6] p-3 rounded-lg mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
-          <div className="flex items-center gap-2 font-bold text-[#0A1B27]">
+        <div className="bg-[#E2F0F5] border border-[#BCDCE6] p-3 rounded-lg mb-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs shadow-xs">
+          <div className="flex items-center gap-2 font-bold text-[#0A1B27] shrink-0">
             <Sparkles size={15} className="text-[#007A78]" />
-            <span>SIH26176 Demo Mode: Fast-track Role Credentials</span>
+            <span>Fast-Track Demo Access:</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickDemoFill('officer', 'incois_scientist')}
-              className="bg-white hover:bg-slate-50 text-[#0A1B27] border border-[#CCE4EC] px-2.5 py-1 font-semibold rounded text-[11px] transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
-            >
-              <ShieldCheck size={13} className="text-[#007A78]" />
-              <span>INCOIS Officer</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemoFill('officer', 'coast_guard')}
-              className="bg-white hover:bg-slate-50 text-[#0A1B27] border border-[#CCE4EC] px-2.5 py-1 font-semibold rounded text-[11px] transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
-            >
-              <Radio size={13} className="text-[#E86014]" />
-              <span>Coast Guard</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemoFill('skipper')}
-              className="bg-white hover:bg-slate-50 text-[#0A1B27] border border-[#CCE4EC] px-2.5 py-1 font-semibold rounded text-[11px] transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
-            >
-              <Ship size={13} className="text-[#007A78]" />
-              <span>Skipper</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemoFill('researcher')}
-              className="bg-white hover:bg-slate-50 text-[#0A1B27] border border-[#CCE4EC] px-2.5 py-1 font-semibold rounded text-[11px] transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
-            >
-              <Cpu size={13} className="text-amber-600" />
-              <span>Researcher</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {DEMO_USERS.map((demo) => (
+              <button
+                key={demo.id}
+                type="button"
+                disabled={!!authenticatingEmail}
+                onClick={() => handleInstantDemoLogin(demo)}
+                className={`bg-white hover:bg-slate-50 text-[#0A1B27] border border-[#CCE4EC] px-2.5 py-1 font-semibold rounded text-[11px] transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50 hover:border-[#007A78]`}
+                title={`1-Click Login as ${demo.name} (${demo.title})`}
+              >
+                {authenticatingEmail === demo.email ? (
+                  <div className="w-3 h-3 border-2 border-[#007A78] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className={`w-2 h-2 rounded-full ${
+                    demo.id === 'skipper' ? 'bg-emerald-500' :
+                    demo.id === 'coast_guard' ? 'bg-orange-500' :
+                    demo.id === 'incois_scientist' ? 'bg-teal-600' :
+                    demo.id === 'researcher' ? 'bg-amber-500' :
+                    demo.id === 'fisheries_officer' ? 'bg-blue-600' : 'bg-slate-600'
+                  }`} />
+                )}
+                <span>{demo.badgeText}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* STEP 1: WHO ARE YOU? (ROLE SELECTION) */}
+        {/* Global Error Alert */}
+        {errorMsg && currentStep === 'role_select' && (
+          <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2.5 animate-fade-in">
+            <AlertCircle size={16} className="shrink-0 text-red-600" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* STEP 1: WHO ARE YOU? / DEMO ACCOUNTS */}
         {currentStep === 'role_select' && (
           <div className="bg-white border border-[#CCE4EC] shadow-md rounded-xl p-6 sm:p-8 animate-fade-in">
-            <div className="text-center mb-8">
-              <span className="inline-flex items-center gap-1.5 bg-[#007A78]/10 text-[#007A78] text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-                <BadgeCheck size={14} />
-                <span>Maritime Clearance &amp; Authentication</span>
-              </span>
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0A1B27] tracking-tight">
-                Who Are You? Select Your Maritime Identity
-              </h1>
-              <p className="text-xs sm:text-sm text-[#5C7788] mt-1.5 max-w-xl mx-auto">
-                ORCA tailors its multi-agent reasoning, command controls, and compliance tools specifically to your operational authority and role at sea.
-              </p>
-            </div>
-
-            {/* 4 Identity Selection Cards */}
-            <div className="grid sm:grid-cols-2 gap-4 mb-6">
-              
-              {/* Option 1: Government & Coastal Officer */}
-              <div
-                onClick={() => setSelectedRole('officer')}
-                className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                  selectedRole === 'officer'
-                    ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-lg bg-[#007A78]/10 text-[#007A78] border border-[#007A78]/20">
-                      <ShieldCheck size={22} />
-                    </div>
-                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      selectedRole === 'officer' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
-                    }`}>
-                      {selectedRole === 'officer' && <Check size={11} strokeWidth={3} />}
-                    </span>
-                  </div>
-                  <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
-                    Government / Marine Officer
-                  </h3>
-                  <p className="text-xs text-[#5C7788] leading-relaxed">
-                    Official administrative, oceanographic, surveillance, or enforcement authority requiring validated Government Service ID.
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-[#007A78]">
-                  Includes INCOIS, Coast Guard, Fisheries &amp; Port Master
-                </div>
-              </div>
-
-              {/* Option 2: Vessel Skipper / Commercial Fisherman */}
-              <div
-                onClick={() => setSelectedRole('skipper')}
-                className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                  selectedRole === 'skipper'
-                    ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <Ship size={22} />
-                    </div>
-                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      selectedRole === 'skipper' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
-                    }`}>
-                      {selectedRole === 'skipper' && <Check size={11} strokeWidth={3} />}
-                    </span>
-                  </div>
-                  <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
-                    Vessel Skipper / Fisherman
-                  </h3>
-                  <p className="text-xs text-[#5C7788] leading-relaxed">
-                    Master mariner, mechanized trawler skipper, gillnetter, or artisanal boat captain seeking safe, fuel-efficient fishing coordinates.
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-emerald-700">
-                  Wheelhouse Advisories &amp; Live Route Optimizations
-                </div>
-              </div>
-
-              {/* Option 3: Marine Researcher */}
-              <div
-                onClick={() => setSelectedRole('researcher')}
-                className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                  selectedRole === 'researcher'
-                    ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
-                      <Cpu size={22} />
-                    </div>
-                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      selectedRole === 'researcher' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
-                    }`}>
-                      {selectedRole === 'researcher' && <Check size={11} strokeWidth={3} />}
-                    </span>
-                  </div>
-                  <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
-                    Marine Scientist / Oceanographer
-                  </h3>
-                  <p className="text-xs text-[#5C7788] leading-relaxed">
-                    Academic scholar or environmental institute researcher inspecting thermal front dynamics and biomass conservation trends.
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-amber-700">
-                  Raw INCOIS / OCM-3 Telemetry &amp; Multi-Agent Metrics
-                </div>
-              </div>
-
-              {/* Option 4: Port Operator / Public */}
-              <div
-                onClick={() => setSelectedRole('port_crew')}
-                className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                  selectedRole === 'port_crew'
-                    ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
-                      <Anchor size={22} />
-                    </div>
-                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      selectedRole === 'port_crew' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
-                    }`}>
-                      {selectedRole === 'port_crew' && <Check size={11} strokeWidth={3} />}
-                    </span>
-                  </div>
-                  <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
-                    Port Operator / Public Trade
-                  </h3>
-                  <p className="text-xs text-[#5C7788] leading-relaxed">
-                    Cold storage operator, fish trade logistics coordinator, or harbor debrief analyst monitoring daily quay-side landings.
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-slate-700">
-                  Harbor Ledger Logs &amp; Seasonal Volume Trends
-                </div>
-              </div>
-
-            </div>
-
-            {/* Officer Category Selector if Officer Role is picked */}
-            {selectedRole === 'officer' && (
-              <div className="bg-[#E2F0F5]/60 border border-[#BCDCE6] rounded-xl p-5 mb-6 animate-fade-in">
-                <div className="flex items-center gap-2 mb-3">
-                  <Building2 size={16} className="text-[#007A78]" />
-                  <span className="font-serif font-bold text-sm text-[#0A1B27]">
-                    Select Your Officer Department / Cadre:
-                  </span>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {OFFICER_CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleSelectOfficerType(cat.id)}
-                      className={`text-left p-3 rounded-lg border transition-all cursor-pointer ${
-                        officerType === cat.id
-                          ? 'border-[#007A78] bg-white shadow-xs'
-                          : 'border-[#CCE4EC] bg-white/70 hover:bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <strong className="text-xs text-[#0A1B27] font-bold block">{cat.title}</strong>
-                        {officerType === cat.id && <Check size={13} className="text-[#007A78]" />}
-                      </div>
-                      <span className="text-[11px] text-[#5C7788] block mt-0.5">{cat.dept}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#E0EEF3]">
-              <div className="text-xs text-[#5C7788]">
-                Step 1 of 2 · Maritime identity ensures compliance under MFRA &amp; MoES regulations.
-              </div>
+            
+            {/* Mode Selector Tabs */}
+            <div className="flex items-center justify-center p-1 bg-[#F0F7FA] border border-[#CCE4EC] rounded-xl mb-7">
               <button
                 type="button"
-                onClick={() => setCurrentStep('credentials')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-6 py-3 rounded-lg font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm cursor-pointer active:scale-98"
+                onClick={() => setLoginMode('demo')}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold font-sans uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  loginMode === 'demo'
+                    ? 'bg-[#007A78] text-white shadow-sm'
+                    : 'text-[#5C7788] hover:text-[#0A1B27] hover:bg-white/60'
+                }`}
               >
-                <span>Proceed to Verification</span>
-                <ArrowRight size={14} className="text-[#007A78]" />
+                <Sparkles size={14} />
+                <span>1-Click Demo Accounts</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                  loginMode === 'demo' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  6 Personas
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMode('manual')}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold font-sans uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  loginMode === 'manual'
+                    ? 'bg-[#007A78] text-white shadow-sm'
+                    : 'text-[#5C7788] hover:text-[#0A1B27] hover:bg-white/60'
+                }`}
+              >
+                <Lock size={13} />
+                <span>Custom Role &amp; ID Verification</span>
               </button>
             </div>
 
-            {/* Social / National SSO options */}
-            <div className="mt-6 pt-4 border-t border-slate-200">
-              <SSOButtons
-                onSelectSSO={handleSSOSelect}
-                selectedRole={selectedRole}
-                officerType={officerType}
+            {/* TAB 1: 1-CLICK DEMO LOGIN GRID */}
+            {loginMode === 'demo' && (
+              <DemoLoginGrid
+                onInstantLogin={handleInstantDemoLogin}
+                onFillCredentials={handleFillCredentials}
+                isAuthenticating={authenticatingEmail}
               />
-            </div>
+            )}
+
+            {/* TAB 2: MANUAL ROLE SELECTION */}
+            {loginMode === 'manual' && (
+              <div>
+                <div className="text-center mb-8">
+                  <span className="inline-flex items-center gap-1.5 bg-[#007A78]/10 text-[#007A78] text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">
+                    <BadgeCheck size={14} />
+                    <span>Maritime Clearance &amp; Authentication</span>
+                  </span>
+                  <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0A1B27] tracking-tight">
+                    Select Your Maritime Authority
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[#5C7788] mt-1.5 max-w-xl mx-auto">
+                    ORCA tailors its multi-agent reasoning, command controls, and compliance tools specifically to your operational authority and role at sea.
+                  </p>
+                </div>
+
+                {/* 4 Identity Selection Cards */}
+                <div className="grid sm:grid-cols-2 gap-4 mb-6">
+                  
+                  {/* Option 1: Government & Coastal Officer */}
+                  <div
+                    onClick={() => handleRoleSelect('officer')}
+                    className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedRole === 'officer'
+                        ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 rounded-lg bg-[#007A78]/10 text-[#007A78] border border-[#007A78]/20">
+                          <ShieldCheck size={22} />
+                        </div>
+                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          selectedRole === 'officer' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
+                        }`}>
+                          {selectedRole === 'officer' && <Check size={11} strokeWidth={3} />}
+                        </span>
+                      </div>
+                      <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
+                        Government / Marine Officer
+                      </h3>
+                      <p className="text-xs text-[#5C7788] leading-relaxed">
+                        Official administrative, oceanographic, surveillance, or enforcement authority requiring validated Government Service ID.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-[#007A78]">
+                      Includes INCOIS, Coast Guard, Fisheries &amp; Port Master
+                    </div>
+                  </div>
+
+                  {/* Option 2: Vessel Skipper / Commercial Fisherman */}
+                  <div
+                    onClick={() => handleRoleSelect('skipper')}
+                    className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedRole === 'skipper'
+                        ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <Ship size={22} />
+                        </div>
+                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          selectedRole === 'skipper' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
+                        }`}>
+                          {selectedRole === 'skipper' && <Check size={11} strokeWidth={3} />}
+                        </span>
+                      </div>
+                      <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
+                        Vessel Skipper / Fisherman
+                      </h3>
+                      <p className="text-xs text-[#5C7788] leading-relaxed">
+                        Master mariner, mechanized trawler skipper, gillnetter, or artisanal boat captain seeking safe, fuel-efficient fishing coordinates.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-emerald-700">
+                      Wheelhouse Advisories &amp; Live Route Optimizations
+                    </div>
+                  </div>
+
+                  {/* Option 3: Marine Researcher */}
+                  <div
+                    onClick={() => handleRoleSelect('researcher')}
+                    className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedRole === 'researcher'
+                        ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+                          <Cpu size={22} />
+                        </div>
+                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          selectedRole === 'researcher' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
+                        }`}>
+                          {selectedRole === 'researcher' && <Check size={11} strokeWidth={3} />}
+                        </span>
+                      </div>
+                      <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
+                        Marine Scientist / Oceanographer
+                      </h3>
+                      <p className="text-xs text-[#5C7788] leading-relaxed">
+                        Academic scholar or environmental institute researcher inspecting thermal front dynamics and biomass conservation trends.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-amber-700">
+                      Raw INCOIS / OCM-3 Telemetry &amp; Multi-Agent Metrics
+                    </div>
+                  </div>
+
+                  {/* Option 4: Port Operator / Public */}
+                  <div
+                    onClick={() => handleRoleSelect('port_crew')}
+                    className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedRole === 'port_crew'
+                        ? 'border-[#007A78] bg-[#E2F0F5]/40 shadow-sm'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
+                          <Anchor size={22} />
+                        </div>
+                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          selectedRole === 'port_crew' ? 'border-[#007A78] bg-[#007A78] text-white' : 'border-slate-300'
+                        }`}>
+                          {selectedRole === 'port_crew' && <Check size={11} strokeWidth={3} />}
+                        </span>
+                      </div>
+                      <h3 className="font-serif font-bold text-base text-[#0A1B27] mb-1">
+                        Port Operator / Public Trade
+                      </h3>
+                      <p className="text-xs text-[#5C7788] leading-relaxed">
+                        Cold storage operator, fish trade logistics coordinator, or harbor debrief analyst monitoring daily quay-side landings.
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-200/80 text-[11px] font-semibold text-slate-700">
+                      Harbor Ledger Logs &amp; Seasonal Volume Trends
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Officer Category Selector if Officer Role is picked */}
+                {selectedRole === 'officer' && (
+                  <div className="bg-[#E2F0F5]/60 border border-[#BCDCE6] rounded-xl p-5 mb-6 animate-fade-in">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Building2 size={16} className="text-[#007A78]" />
+                      <span className="font-serif font-bold text-sm text-[#0A1B27]">
+                        Select Your Officer Department / Cadre:
+                      </span>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {OFFICER_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => handleSelectOfficerType(cat.id)}
+                          className={`text-left p-3 rounded-lg border transition-all cursor-pointer ${
+                            officerType === cat.id
+                              ? 'border-[#007A78] bg-white shadow-xs'
+                              : 'border-[#CCE4EC] bg-white/70 hover:bg-white'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <strong className="text-xs text-[#0A1B27] font-bold block">{cat.title}</strong>
+                            {officerType === cat.id && <Check size={13} className="text-[#007A78]" />}
+                          </div>
+                          <span className="text-[11px] text-[#5C7788] block mt-0.5">{cat.dept}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#E0EEF3]">
+                  <div className="text-xs text-[#5C7788]">
+                    Step 1 of 2 · Maritime identity ensures compliance under MFRA &amp; MoES regulations.
+                  </div>
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <Link
+                      to="/advisory"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 border border-[#CCE4EC] hover:border-[#007A78] text-[#2D4454] hover:text-[#007A78] bg-slate-50 hover:bg-white px-4 py-3 rounded-lg font-sans font-semibold text-xs uppercase tracking-wider transition-all"
+                    >
+                      <Compass size={14} className="text-[#007A78]" />
+                      <span>Launch Advisory Directly</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep('credentials')}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white px-6 py-3 rounded-lg font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm cursor-pointer active:scale-98"
+                    >
+                      <span>Proceed to Verification</span>
+                      <ArrowRight size={14} className="text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Social / National SSO options */}
+                <div className="mt-6 pt-4 border-t border-slate-200">
+                  <SSOButtons
+                    onSelectSSO={handleSSOSelect}
+                    selectedRole={selectedRole}
+                    officerType={officerType}
+                  />
+                </div>
+              </div>
+            )}
 
           </div>
         )}
@@ -765,7 +897,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={submitting || verifyingGovtId}
-                  className="w-full bg-[#061219] hover:bg-[#0E2332] text-white py-3 px-4 font-sans font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer active:scale-98"
+                  className="w-full bg-[#007A78] hover:bg-[#006361] text-white py-3 px-4 font-sans font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer active:scale-98"
                 >
                   {submitting ? (
                     <span>Verifying Identity &amp; Establishing Session…</span>
@@ -773,13 +905,13 @@ export default function Login() {
                     <>
                       {selectedRole === 'officer' ? (
                         <>
-                          <BadgeCheck size={16} className="text-[#007A78]" />
+                          <BadgeCheck size={16} className="text-white" />
                           <span>Verify Govt ID &amp; Sign In</span>
                         </>
                       ) : (
                         <>
                           <span>Verify Credentials &amp; Enter Portal</span>
-                          <ArrowRight size={14} className="text-[#007A78]" />
+                          <ArrowRight size={14} className="text-white" />
                         </>
                       )}
                     </>
@@ -822,40 +954,40 @@ export default function Login() {
             </p>
 
             {/* Visual Maritime Clearance Pass Card */}
-            <div className="bg-[#061219] text-white p-5 rounded-xl border border-slate-800 text-left max-w-lg mx-auto mb-6 shadow-lg font-mono">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
-                <div className="flex items-center gap-2 text-[#00b4d8] font-bold">
+            <div className="bg-[#E2F0F5] text-[#0A1B27] p-5 rounded-xl border border-[#BCDCE6] text-left max-w-lg mx-auto mb-6 shadow-sm font-mono">
+              <div className="flex items-center justify-between pb-3 border-b border-[#BCDCE6] text-xs">
+                <div className="flex items-center gap-2 text-[#007A78] font-bold">
                   <ShieldCheck size={16} />
                   <span>MARITIME CLEARANCE PASS</span>
                 </div>
-                <span className="text-[10px] text-slate-400">{clearancePass.timestamp}</span>
+                <span className="text-[10px] text-[#5C7788]">{clearancePass.timestamp}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3 py-3 text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-400 block">AUTHENTICATED USER</span>
-                  <strong className="text-white text-sm font-serif block">{clearancePass.user?.full_name}</strong>
-                  <span className="text-[11px] text-[#00b4d8]">{clearancePass.user?.email}</span>
+                  <span className="text-[10px] text-[#5C7788] block">AUTHENTICATED USER</span>
+                  <strong className="text-[#0A1B27] text-sm font-serif block">{clearancePass.user?.full_name}</strong>
+                  <span className="text-[11px] text-[#007A78]">{clearancePass.user?.email}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">AUTHORITY / ROLE</span>
-                  <strong className="text-amber-400 uppercase text-xs block font-bold">
+                  <span className="text-[10px] text-[#5C7788] block">AUTHORITY / ROLE</span>
+                  <strong className="text-[#007A78] uppercase text-xs block font-bold">
                     {clearancePass.user?.role === 'officer' ? (
                       OFFICER_CATEGORIES.find((o) => o.id === clearancePass.user?.officer_type)?.title || 'Marine Officer'
                     ) : (clearancePass.user?.role || 'Skipper')}
                   </strong>
-                  <span className="text-[10px] text-emerald-400">Verified National Identity</span>
+                  <span className="text-[10px] text-emerald-700 font-semibold">Verified National Identity</span>
                 </div>
               </div>
 
-              <div className="pt-2.5 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px]">
+              <div className="pt-2.5 border-t border-[#BCDCE6] grid grid-cols-2 gap-2 text-[11px]">
                 <div>
-                  <span className="text-slate-400">Badge / Reg ID:</span>{' '}
-                  <strong className="text-white">{clearancePass.govtIdNumber}</strong>
+                  <span className="text-[#5C7788]">Badge / Reg ID:</span>{' '}
+                  <strong className="text-[#0A1B27]">{clearancePass.govtIdNumber}</strong>
                 </div>
                 <div>
-                  <span className="text-slate-400">Station / Port:</span>{' '}
-                  <strong className="text-white">{clearancePass.user?.harbor_base || 'Sagar Roads Station'}</strong>
+                  <span className="text-[#5C7788]">Station / Port:</span>{' '}
+                  <strong className="text-[#0A1B27]">{clearancePass.user?.harbor_base || 'Sagar Roads Station'}</strong>
                 </div>
               </div>
             </div>

@@ -74,6 +74,52 @@ class ScanHistory(Base):
     user = relationship("User", back_populates="scans")
     zone = relationship("Zone", back_populates="scans")
 
+    @property
+    def zone_name(self) -> str:
+        return self.zone.name if self.zone else self.zone_id
+
+    @property
+    def scenario_date(self) -> str:
+        return self.scan_date
+
+    @property
+    def requested_at(self) -> datetime:
+        return self.created_at
+
+ScanLog = ScanHistory
+
+class CatchLogEntry(Base):
+    __tablename__ = "catch_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    zone_id = Column(String(50), ForeignKey("zones.id"), nullable=False)
+    zone_name = Column(String(100), nullable=False)
+    trip_date = Column(String(20), nullable=False)
+    estimated_kg = Column(Float, nullable=False)
+    species = Column(String(100), nullable=False)
+    notes = Column(Text, nullable=True)
+    logged_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+    zone = relationship("Zone")
+
+class LandingLogEntry(Base):
+    __tablename__ = "landing_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    zone_id = Column(String(50), ForeignKey("zones.id"), nullable=False)
+    zone_name = Column(String(100), nullable=False)
+    landing_date = Column(String(20), nullable=False)
+    actual_kg = Column(Float, nullable=False)
+    species = Column(String(100), nullable=False)
+    notes = Column(Text, nullable=True)
+    logged_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+    zone = relationship("Zone")
+
 class UserSavedZone(Base):
     __tablename__ = "user_saved_zones"
 
@@ -85,3 +131,4 @@ class UserSavedZone(Base):
 
     user = relationship("User", back_populates="saved_zones")
     zone = relationship("Zone", back_populates="saved_by")
+

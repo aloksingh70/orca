@@ -1,14 +1,22 @@
+import { lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { Compass, TableProperties, ShieldCheck, Radio } from 'lucide-react'
 import BathymetricSounder from './BathymetricSounder.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 
+const OceanShader = lazy(() => import('./OceanShader.jsx'))
+
 export default function Hero() {
   const { t } = useLanguage()
 
   return (
-    <section id="home" className="relative w-full pt-28 pb-16 px-4 sm:px-6 bg-[#EAF4F8] border-b border-[#CCE4EC]">
-      <div className="max-w-7xl mx-auto">
+    <section id="home" className="relative w-full pt-28 pb-16 px-4 sm:px-6 bg-[#EAF4F8] border-b border-[#CCE4EC] overflow-hidden">
+      {/* Lazy-Loaded Ambient Wave Shader Canvas with Visibility & Battery Guards */}
+      <Suspense fallback={null}>
+        <OceanShader />
+      </Suspense>
+
+      <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* Left Column (5 cols): Authoritative Hydrographic Dispatch */}
@@ -39,14 +47,14 @@ export default function Hero() {
             <div className="flex flex-wrap items-center gap-3 mb-8 w-full sm:w-auto">
               <Link
                 to="/advisory"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98] rounded focus-visible:ring-2 focus-visible:ring-[#007A78] focus-visible:outline-none"
               >
-                <Compass size={14} className="text-[#007A78]" />
+                <Compass size={14} className="text-white" />
                 <span>{t('hero', 'openAdvisory')}</span>
               </Link>
               <a
                 href="#zones"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-5 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-5 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors rounded focus-visible:ring-2 focus-visible:ring-[#007A78] focus-visible:outline-none"
               >
                 <TableProperties size={14} className="text-[#007A78]" />
                 <span>{t('hero', 'viewPortLogs')}</span>

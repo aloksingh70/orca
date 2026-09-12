@@ -1,39 +1,48 @@
 import os
+import csv
+import io
+import httpx
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 try:
     from .database import engine, Base, get_db, init_db
-    from .models import User, Zone, ScanHistory, UserSavedZone
+    from .models import User, Zone, ScanHistory, UserSavedZone, CatchLogEntry, LandingLogEntry, ScanLog
     from .schemas import (
         UserRegister, UserLogin, UserOut, Token, OfficerVerifyRequest, SSOLoginRequest,
-        ZoneOut, ScanResult, ScanRequest, SavedZoneCreate, SavedZoneOut
+        ZoneOut, ScanResult, ScanRequest, SavedZoneCreate, SavedZoneOut,
+        CatchLogCreate, CatchLogOut, LandingLogCreate, LandingLogOut, ScanLogOut, ViolationOut,
+        VesselOut
     )
     from .security import (
         hash_password, verify_password, create_access_token,
         get_current_user, get_optional_user
     )
-    from .agents import evaluate_zone, scan_coastline
+    from .agents import evaluate_zone, scan_coastline, fetch_bulk_live_data, compute_official_match_verification
     from .seed_data import seed_database
+    from .vessels import get_live_vessels
 except ImportError:
     from database import engine, Base, get_db, init_db
-    from models import User, Zone, ScanHistory, UserSavedZone
+    from models import User, Zone, ScanHistory, UserSavedZone, CatchLogEntry, LandingLogEntry, ScanLog
     from schemas import (
         UserRegister, UserLogin, UserOut, Token, OfficerVerifyRequest, SSOLoginRequest,
-        ZoneOut, ScanResult, ScanRequest, SavedZoneCreate, SavedZoneOut
+        ZoneOut, ScanResult, ScanRequest, SavedZoneCreate, SavedZoneOut,
+        CatchLogCreate, CatchLogOut, LandingLogCreate, LandingLogOut, ScanLogOut, ViolationOut,
+        VesselOut
     )
     from security import (
         hash_password, verify_password, create_access_token,
         get_current_user, get_optional_user
     )
-    from agents import evaluate_zone, scan_coastline
+    from agents import evaluate_zone, scan_coastline, fetch_bulk_live_data, compute_official_match_verification
     from seed_data import seed_database
+    from vessels import get_live_vessels
 
 # Create tables immediately on module load to guarantee schema readiness
 init_db()
@@ -101,6 +110,43 @@ def health_check(db: Session = Depends(get_db)):
             "fleet_users": users_count
         }
     }
+
+# -----------------------------------------------------------------------------
+# Vernacular TTS Audio Endpoint (Bengali, Hindi, Odia, English)
+# -----------------------------------------------------------------------------
+_tts_cache = {}
+
+@app.get("/api/advisory/tts", tags=["Advisory"])
+async def get_advisory_tts(text: str, lang: str = "bn"):
+    """
+    Synthesizes vernacular natural audio for marine advisories using high-fidelity
+    audio streams. Returns audio/mpeg stream with caching.
+    """
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="Text parameter is required")
+
+    cache_key = f"{lang}:{text.strip()}"
+    if cache_key in _tts_cache:
+        return Response(content=_tts_cache[cache_key], media_type="audio/mpeg")
+
+    tts_lang = lang
+    if lang == "or":
+        tts_lang = "hi"
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://translate.google.com/translate_tts",
+                params={"ie": "UTF-8", "tl": tts_lang, "client": "tw-ob", "q": text[:500]},
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+            )
+            if resp.status_code == 200 and len(resp.content) > 100:
+                _tts_cache[cache_key] = resp.content
+                return Response(content=resp.content, media_type="audio/mpeg")
+    except Exception as e:
+        print(f"[TTS Warning] TTS streaming fetch failed: {e}")
+
+    raise HTTPException(status_code=503, detail="TTS voice broadcast temporarily unavailable")
 
 # -----------------------------------------------------------------------------
 # Authentication & User Management
@@ -341,23 +387,35 @@ def scan_coastal_advisory(
     # Run multi-agent pipeline
     scanned_results = scan_coastline(zones, scan_date)
 
-    # If an authenticated skipper/officer requested the scan, optionally record history
-    if user and len(scanned_results) > 0:
-        top_pick = scanned_results[0]
-        history_entry = ScanHistory(
-            user_id=user.id,
-            zone_id=top_pick["zoneId"],
-            scan_date=scan_date,
-            combined_score=top_pick["combinedScore"],
-            verdict=top_pick["verdict"],
-            orchestrator_note=top_pick["orchestratorNote"],
-            agent_readouts=[
-                {"agent": a["agent"], "label": a["label"], "score": a["score"]}
-                for a in top_pick["agents"]
-            ]
-        )
-        db.add(history_entry)
+    # Persist scan records for each evaluated sector to support audit logging and enforcement history
+    try:
+        for item in scanned_results:
+            history_entry = ScanHistory(
+                user_id=user.id if user else None,
+                zone_id=item["zoneId"],
+                scan_date=scan_date,
+                combined_score=item["combinedScore"],
+                verdict=item["verdict"],
+                orchestrator_note=item["orchestratorNote"],
+                agent_readouts=[
+                    {
+                        "agent": a["agent"],
+                        "label": a["label"],
+                        "score": a["score"],
+                        "readouts": a.get("readouts", []),
+                        "summary": a.get("summary", ""),
+                        "unsafe": a.get("unsafe"),
+                        "closed": a.get("closed")
+                    }
+                    for a in item.get("agents", [])
+                ]
+            )
+            db.add(history_entry)
         db.commit()
+    except Exception as e:
+        db.rollback()
+        # Non-fatal log persistence failure
+        print(f"[Scan Log] Warning: failed to save scan history: {e}")
 
     return scanned_results
 
@@ -374,9 +432,9 @@ def evaluate_single_zone(
     scan_date = date or datetime.utcnow().strftime("%Y-%m-%d")
     return evaluate_zone(zone, scan_date)
 
-# -----------------------------------------------------------------------------
-# Saved / Bookmarked Sectors
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------
+# Bookmarked Sectors
+# -------------------------------------------------------------
 @app.get("/api/user/saved-zones", response_model=List[SavedZoneOut], tags=["User Bookmarks"])
 def get_user_saved_zones(
     current_user: User = Depends(get_current_user),
@@ -423,9 +481,9 @@ def remove_saved_zone(
         db.commit()
     return None
 
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------
 # User Scan History
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------
 @app.get("/api/user/scans", tags=["User History"])
 def get_user_scans(
     limit: int = 10,
@@ -440,3 +498,234 @@ def get_user_scans(
         .all()
     )
     return scans
+
+# -----------------------------------------------------------------------------
+# Vessel Skipper / Catch Logging
+# -----------------------------------------------------------------------------
+@app.post("/api/catch-log", response_model=CatchLogOut, status_code=201, tags=["Fleet Catch Log"])
+def submit_catch_log(
+    log_in: CatchLogCreate,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_optional_user)
+):
+    zone = db.query(Zone).filter(Zone.id == log_in.zone_id).first()
+    zone_name = log_in.zone_name or (zone.name if zone else log_in.zone_id)
+
+    entry = CatchLogEntry(
+        user_id=user.id if user else None,
+        zone_id=log_in.zone_id,
+        zone_name=zone_name,
+        trip_date=log_in.trip_date,
+        estimated_kg=log_in.estimated_kg,
+        species=log_in.species,
+        notes=log_in.notes
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+@app.get("/api/catch-log", response_model=List[CatchLogOut], tags=["Fleet Catch Log"])
+def get_catch_logs(
+    zone_id: Optional[str] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    query = db.query(CatchLogEntry)
+    if zone_id:
+        query = query.filter(CatchLogEntry.zone_id == zone_id)
+    return query.order_by(CatchLogEntry.logged_at.desc()).limit(limit).all()
+
+# -----------------------------------------------------------------------------
+# Marine Officer / Violations & Enforcement Log
+# -----------------------------------------------------------------------------
+@app.get("/api/violations", response_model=List[ViolationOut], tags=["Marine Officer Enforcement"])
+def get_coastal_violations(
+    zone_id: Optional[str] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    query = db.query(ScanHistory)
+    if zone_id:
+        query = query.filter(ScanHistory.zone_id == zone_id)
+
+    records = query.order_by(ScanHistory.created_at.desc()).limit(limit * 3).all()
+    violations = []
+    for r in records:
+        is_violation = (
+            r.verdict == "NO GO"
+            or r.combined_score < 45
+            or any(a.get("unsafe") or a.get("closed") for a in (r.agent_readouts or []))
+        )
+        if is_violation:
+            violations.append(
+                ViolationOut(
+                    id=r.id,
+                    zone_id=r.zone_id,
+                    zone_name=r.zone_name,
+                    scan_date=r.scan_date,
+                    combined_score=r.combined_score,
+                    verdict=r.verdict,
+                    orchestrator_note=r.orchestrator_note,
+                    agent_readouts=r.agent_readouts,
+                    created_at=r.created_at
+                )
+            )
+            if len(violations) >= limit:
+                break
+    return violations
+
+# -----------------------------------------------------------------------------
+# Marine Scientist / Scan Audit Log Exporter
+# -----------------------------------------------------------------------------
+@app.get("/api/scan-log/export", tags=["Research & Audit"])
+def export_scan_log(
+    format: str = "json",
+    zone_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(ScanHistory)
+    if zone_id:
+        query = query.filter(ScanHistory.zone_id == zone_id)
+    if start_date:
+        query = query.filter(ScanHistory.scan_date >= start_date)
+    if end_date:
+        query = query.filter(ScanHistory.scan_date <= end_date)
+
+    records = query.order_by(ScanHistory.created_at.desc()).limit(500).all()
+
+    if format.lower() == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "id", "user_id", "zone_id", "zone_name", "scan_date",
+            "combined_score", "verdict", "orchestrator_note", "created_at"
+        ])
+        for r in records:
+            writer.writerow([
+                r.id,
+                r.user_id,
+                r.zone_id,
+                r.zone_name,
+                r.scan_date,
+                r.combined_score,
+                r.verdict,
+                r.orchestrator_note.replace("\n", " ") if r.orchestrator_note else "",
+                r.created_at.isoformat() if r.created_at else ""
+            ])
+        output.seek(0)
+        return Response(
+            content=output.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=orca_scan_audit_log.csv"}
+        )
+
+    # Return JSON
+    return [
+        {
+            "id": r.id,
+            "user_id": r.user_id,
+            "zone_id": r.zone_id,
+            "zone_name": r.zone_name,
+            "scan_date": r.scan_date,
+            "combined_score": r.combined_score,
+            "verdict": r.verdict,
+            "orchestrator_note": r.orchestrator_note,
+            "agent_readouts": r.agent_readouts,
+            "created_at": r.created_at.isoformat() if r.created_at else None
+        }
+        for r in records
+    ]
+
+# -----------------------------------------------------------------------------
+# Port Operator / Landing Log
+# -----------------------------------------------------------------------------
+@app.post("/api/landing-log", response_model=LandingLogOut, status_code=201, tags=["Port Logistics"])
+def submit_landing_log(
+    log_in: LandingLogCreate,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_optional_user)
+):
+    zone = db.query(Zone).filter(Zone.id == log_in.zone_id).first()
+    zone_name = log_in.zone_name or (zone.name if zone else log_in.zone_id)
+
+    entry = LandingLogEntry(
+        user_id=user.id if user else None,
+        zone_id=log_in.zone_id,
+        zone_name=zone_name,
+        landing_date=log_in.landing_date,
+        actual_kg=log_in.actual_kg,
+        species=log_in.species,
+        notes=log_in.notes
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+@app.get("/api/landing-log", response_model=List[LandingLogOut], tags=["Port Logistics"])
+def get_landing_logs(
+    zone_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    query = db.query(LandingLogEntry)
+    if zone_id:
+        query = query.filter(LandingLogEntry.zone_id == zone_id)
+    if start_date:
+        query = query.filter(LandingLogEntry.landing_date >= start_date)
+    if end_date:
+        query = query.filter(LandingLogEntry.landing_date <= end_date)
+    return query.order_by(LandingLogEntry.logged_at.desc()).limit(limit).all()
+
+# -----------------------------------------------------------------------------
+# Live Maritime AIS Vessel Tracking (Bay of Bengal & Sandheads Corridor)
+# -----------------------------------------------------------------------------
+@app.get("/api/vessels/live", response_model=List[VesselOut], tags=["Maritime Surveillance"])
+def get_live_bay_of_bengal_vessels(category: Optional[str] = None):
+    """
+    Live Automatic Identification System (AIS) tracking feed for the Bay of Bengal & Sandheads fairway.
+    Monitors Cargo ships, Passenger Cruise vessels & pilgrim ferries, Tankers, Fishing craft, and Coast Guard patrols.
+    Calculates real-time proximity to coastal sectors (WB-01 to WB-06) and flags collision hazards.
+    """
+    return get_live_vessels(category=category)
+
+# -----------------------------------------------------------------------------
+# Live Telemetry Official Match Verification Report
+# -----------------------------------------------------------------------------
+@app.get("/api/telemetry/live-verify", tags=["Telemetry"])
+def get_live_telemetry_verification(db: Session = Depends(get_db)):
+    """
+    Official audit report comparing real-time satellite/buoy telemetry against
+    INCOIS seasonal climatology models and IMD criteria across all 6 sectors.
+    """
+    zones = db.query(Zone).all()
+    live_data = fetch_bulk_live_data(zones)
+    report = []
+    for z in zones:
+        v = compute_official_match_verification(z, live_data.get(z.id))
+        report.append({
+            "zone_id": z.id,
+            "zone_name": z.name,
+            "sector_code": z.sector_code,
+            "lat": z.lat,
+            "lng": z.lng,
+            "verification": v
+        })
+    return {
+        "status": "success",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "sectors_audited": len(report),
+        "official_providers": [
+            "INCOIS — Indian National Centre for Ocean Information Services",
+            "IMD — India Meteorological Department",
+            "Copernicus Marine / ECMWF Integrated Forecasting System"
+        ],
+        "results": report
+    }
+
+
