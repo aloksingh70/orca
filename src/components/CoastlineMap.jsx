@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { simulateFleetDensity } from '../lib/derived.js'
 import { fetchLiveVessels } from '../lib/api.js'
+import { getLiveVessels } from '../lib/vessels.js'
 
 // Authentic coastal coordinates for WB-01 to WB-06 with real WGS-84 Lat/Lng & SVG mapping
 const MAP_SECTORS = [
@@ -159,7 +160,10 @@ export default function CoastlineMap({
   selectedId = null,
   onSelect = () => {},
   isBanActive = false,
-  scanDate = new Date().toISOString().slice(0, 10)
+  scanDate = new Date().toISOString().slice(0, 10),
+  regionId = 'bay-of-bengal',
+  portId = 'kolkata-haldia',
+  zonesList = []
 }) {
   const [viewMode, setViewMode] = useState('osm') // 'osm' (OpenStreetMap) | 'chart' (SVG Nautical Chart)
   const [tileProvider, setTileProvider] = useState('osm') // 'osm' | 'satellite'
@@ -168,9 +172,42 @@ export default function CoastlineMap({
   const [showLiveAis, setShowLiveAis] = useState(true)
   const [liveVessels, setLiveVessels] = useState([])
 
+  // Dynamically resolve active sectors from supplied zonesList or fallback to MAP_SECTORS
+  const activeSectors = useMemo(() => {
+    if (zonesList && zonesList.length > 0) {
+      return zonesList.map((z, idx) => ({
+        id: z.id,
+        code: z.sectorCode || `Z-${idx + 1}`,
+        name: z.name,
+        lat: z.lat || 21.6167,
+        lng: z.lng || 87.5167,
+        x: 120 + (idx % 6) * 90,
+        y: 220 + (idx % 2 === 0 ? 30 : -30),
+        depth: z.soundingDepth || 15,
+        district: z.coastalDistrict || '',
+        harbor: z.harborName || '',
+        protected: Boolean(z.nearProtectedArea),
+        imblDistanceNM: Math.round((20 + idx * 12.4) * 10) / 10
+      }))
+    }
+    return MAP_SECTORS
+  }, [zonesList])
+
+  // Center coordinates dynamically computed per port
+  const defaultCenter = useMemo(() => {
+    if (activeSectors.length > 0) {
+      const avgLat = activeSectors.reduce((acc, s) => acc + s.lat, 0) / activeSectors.length
+      const avgLng = activeSectors.reduce((acc, s) => acc + s.lng, 0) / activeSectors.length
+      return [avgLat, avgLng]
+    }
+    return [21.65, 87.85]
+  }, [activeSectors])
+
+  // Load live vessels for active region and port
   useEffect(() => {
-    fetchLiveVessels().then((data) => setLiveVessels(data || [])).catch(() => {})
-  }, [])
+    const fresh = getLiveVessels({ regionId, portId })
+    setLiveVessels(fresh)
+  }, [regionId, portId])
 
   // Zomato/Swiggy-style live sailing simulation: smoothly sails vessels along course
   useEffect(() => {
@@ -179,26 +216,27 @@ export default function CoastlineMap({
     const timer = setInterval(() => {
       setLiveVessels((prev) =>
         prev.map((v) => {
-          const spd = v.speed_knots || 4.5
-          const rad = ((v.course_deg || 90) * Math.PI) / 180
+          const spd = v.speedKnots || v.speed_knots || 4.5
+          const rad = (((v.courseDeg ?? v.course_deg ?? 90)) * Math.PI) / 180
           const step = 0.000035 * (spd / 5)
           let nextLat = v.lat + Math.cos(rad) * step
           let nextLng = v.lng + Math.sin(rad) * step
-          let nextCourse = v.course_deg
+          let nextCourse = v.courseDeg ?? v.course_deg ?? 90
 
-          // Keep within Bay of Bengal fairway bounding limits
-          if (nextLat < 21.05 || nextLat > 22.0) nextCourse = (nextCourse + 180) % 360
-          if (nextLng < 87.35 || nextLng > 88.55) nextCourse = (nextCourse + 180) % 360
+          // Keep within active harbor corridor bounds around defaultCenter
+          if (Math.abs(nextLat - defaultCenter[0]) > 0.6 || Math.abs(nextLng - defaultCenter[1]) > 0.8) {
+            nextCourse = (nextCourse + 180) % 360
+          }
 
-          return { ...v, lat: nextLat, lng: nextLng, course_deg: nextCourse }
+          return { ...v, lat: nextLat, lng: nextLng, courseDeg: nextCourse, course_deg: nextCourse }
         })
       )
     }, 2000)
 
     return () => clearInterval(timer)
-  }, [liveVessels.length])
+  }, [liveVessels.length, defaultCenter])
 
-  const selectedSector = MAP_SECTORS.find((s) => s.id === selectedId) || MAP_SECTORS[0]
+  const selectedSector = activeSectors.find((s) => s.id === selectedId) || activeSectors[0]
 
   // Map result lookup
   const getResult = (id) => results?.find((r) => r.zoneId === id)
@@ -279,9 +317,9 @@ export default function CoastlineMap({
   }
 
   // Summary counts for Officer view
-  const violationCount = MAP_SECTORS.filter((s) => getSectorStatus(s.id).status === 'violation').length
-  const hazardCount = MAP_SECTORS.filter((s) => getSectorStatus(s.id).status === 'hazard').length
-  const compliantCount = MAP_SECTORS.filter((s) => {
+  const violationCount = activeSectors.filter((s) => getSectorStatus(s.id).status === 'violation').length
+  const hazardCount = activeSectors.filter((s) => getSectorStatus(s.id).status === 'hazard').length
+  const compliantCount = activeSectors.filter((s) => {
     const st = getSectorStatus(s.id).status
     return st === 'compliant' || st === 'marginal' || st === 'buffer'
   }).length
@@ -317,29 +355,33 @@ export default function CoastlineMap({
 
   // Custom Leaflet DivIcon for Live AIS Vessels
   const createVesselIcon = (vessel) => {
+    const vType = vessel.vesselType || vessel.vessel_type || 'cargo'
+    const spd = vessel.speedKnots || vessel.speed_knots || 4.5
+    const course = vessel.courseDeg ?? vessel.course_deg ?? 90
+
     const dotColor =
-      vessel.vessel_type === 'cargo'
+      vType === 'cargo'
         ? '#3B82F6'
-        : vessel.vessel_type === 'cruise'
+        : vType === 'cruise'
         ? '#A855F7'
-        : vessel.vessel_type === 'tanker'
+        : vType === 'tanker'
         ? '#F59E0B'
-        : vessel.vessel_type === 'patrol'
+        : vType === 'patrol'
         ? '#EF4444'
         : '#10B981'
 
     const hullColor =
-      vessel.vessel_type === 'cargo'
+      vType === 'cargo'
         ? '#1E3A8A'
-        : vessel.vessel_type === 'cruise'
+        : vType === 'cruise'
         ? '#4C1D95'
-        : vessel.vessel_type === 'tanker'
+        : vType === 'tanker'
         ? '#78350F'
-        : vessel.vessel_type === 'patrol'
+        : vType === 'patrol'
         ? '#7F1D1D'
         : '#064E3B'
 
-    const isHeadingEast = vessel.course_deg >= 0 && vessel.course_deg < 180
+    const isHeadingEast = course >= 0 && course < 180
 
     return L.divIcon({
       className: 'custom-vessel-marker',
@@ -428,8 +470,6 @@ export default function CoastlineMap({
       popupAnchor: [0, -36]
     })
   }
-
-  const defaultCenter = useMemo(() => [21.68, 87.95], [])
 
   return (
     <div
@@ -759,8 +799,8 @@ export default function CoastlineMap({
                 </Marker>
               ))}
 
-            {/* WB-01 to WB-06 Coastal Sector Markers on OpenStreetMap */}
-            {MAP_SECTORS.map((sector) => {
+            {/* Coastal Sector Markers on OpenStreetMap */}
+            {activeSectors.map((sector) => {
               const status = getSectorStatus(sector.id)
               const isSelected = selectedId === sector.id
 
@@ -904,34 +944,55 @@ export default function CoastlineMap({
               <text x="655" y="410">88°30' E</text>
             </g>
 
-            {/* Mainland West Bengal Coastline Geometry */}
-            <path
-              d="M 0 160 Q 90 150 150 165 T 260 140 Q 320 130 350 70 L 390 60 Q 420 130 460 140 Q 520 120 570 90 L 610 80 Q 640 130 680 140 T 760 150 L 760 0 L 0 0 Z"
-              fill={isOfficer ? '#0B222D' : '#DDEAF0'}
-              stroke={isOfficer ? '#1B4759' : '#ADC8D8'}
-              strokeWidth="2"
-            />
-
-            <text
-              x="80"
-              y="70"
-              fill={isOfficer ? '#93B9CC' : '#2D4454'}
-              fontSize="12"
-              fontFamily="serif"
-              fontWeight="bold"
-              letterSpacing="2"
-            >
-              WEST BENGAL MAINLAND
-            </text>
-            <text
-              x="80"
-              y="86"
-              fill={isOfficer ? '#93B9CC' : '#476577'}
-              fontSize="9"
-              fontFamily="sans-serif"
-            >
-              Purba Medinipur Coastal Belt
-            </text>
+            {/* Mainland Coastline Geometry: West Bengal High-Res vs Non-WB Schematic */}
+            {/* NOTE ON HYDROGRAPHIC CHART:
+                The high-detail SVG path below represents the authentic West Bengal / Hooghly delta.
+                For other Indian ports (Arabian Sea, Odisha, Andhra, Tamil Nadu, Islands), a schematic
+                fairway navigation path is rendered in Vector Chart mode. High-resolution authentic nautical
+                bathymetry is rendered via OpenStreetMap and Satellite Leaflet modes. */}
+            {portId === 'kolkata-haldia' ? (
+              <g>
+                <path
+                  d="M 0 160 Q 90 150 150 165 T 260 140 Q 320 130 350 70 L 390 60 Q 420 130 460 140 Q 520 120 570 90 L 610 80 Q 640 130 680 140 T 760 150 L 760 0 L 0 0 Z"
+                  fill={isOfficer ? '#0B222D' : '#DDEAF0'}
+                  stroke={isOfficer ? '#1B4759' : '#ADC8D8'}
+                  strokeWidth="2"
+                />
+                <text
+                  x="80"
+                  y="70"
+                  fill={isOfficer ? '#93B9CC' : '#2D4454'}
+                  fontSize="12"
+                  fontFamily="serif"
+                  fontWeight="bold"
+                  letterSpacing="2"
+                >
+                  WEST BENGAL MAINLAND
+                </text>
+                <text
+                  x="80"
+                  y="86"
+                  fill={isOfficer ? '#93B9CC' : '#476577'}
+                  fontSize="9"
+                  fontFamily="sans-serif"
+                >
+                  Purba Medinipur Coastal Belt
+                </text>
+              </g>
+            ) : (
+              <g>
+                <path
+                  d="M 0 140 Q 180 160 380 130 T 760 145 L 760 0 L 0 0 Z"
+                  fill={isOfficer ? '#0B222D' : '#DDEAF0'}
+                  stroke={isOfficer ? '#1B4759' : '#ADC8D8'}
+                  strokeWidth="2"
+                />
+                <rect x="25" y="25" width="380" height="26" rx="4" fill="rgba(10, 27, 39, 0.85)" />
+                <text x="36" y="42" fill="#38BDF8" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
+                  SCHEMATIC HARBOR FAIRWAY · SWITCH TO OSM FOR HIGH-RES
+                </text>
+              </g>
+            )}
 
             <text
               x="330"
@@ -1053,7 +1114,7 @@ export default function CoastlineMap({
               })}
 
             {/* Sector Pins on SVG */}
-            {MAP_SECTORS.map((sector) => {
+            {activeSectors.map((sector) => {
               const isSelected = selectedId === sector.id
               const status = getSectorStatus(sector.id)
 

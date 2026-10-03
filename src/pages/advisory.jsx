@@ -33,7 +33,6 @@ import ScanButton from '../components/ScanButton.jsx'
 import ScenarioDatePicker from '../components/ScenarioDatePicker.jsx'
 import ZoneCard from '../components/ZoneCard.jsx'
 import ReasoningTrace from '../components/ReasoningTrace.jsx'
-import BathymetricSounder from '../components/BathymetricSounder.jsx'
 import CoastlineMap from '../components/CoastlineMap.jsx'
 import DieselEconomicsCalculator from '../components/DieselEconomicsCalculator.jsx'
 import VoiceAdvisoryPlayer from '../components/VoiceAdvisoryPlayer.jsx'
@@ -41,9 +40,13 @@ import SkipperDeck from '../components/SkipperDeck.jsx'
 import OfficerDeck from '../components/OfficerDeck.jsx'
 import ScientistDeck from '../components/ScientistDeck.jsx'
 import PortOperatorDeck from '../components/PortOperatorDeck.jsx'
+import PublicExplainerDeck from '../components/PublicExplainerDeck.jsx'
+import ScenarioSlider from '../components/ScenarioSlider.jsx'
+import ShareableResultCard from '../components/ShareableResultCard.jsx'
 import LiveVesselTracker from '../components/LiveVesselTracker.jsx'
-import DemoSwitcherModal from '../components/DemoSwitcherModal.jsx'
-import { zones } from '../lib/zones.js'
+import { zones, getZonesByPort, getZonesByRegion } from '../lib/zones.js'
+import { REGIONS, getRegionById } from '../lib/regions.js'
+import { PORTS, getPortsByRegion, getPortById } from '../lib/ports.js'
 import { scanCoastline } from '../lib/agents.js'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -53,6 +56,14 @@ import PageMeta from '../components/PageMeta.jsx'
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
 const MARITIME_ROLES = [
+  {
+    id: 'public',
+    label: 'Curious Visitor / General Public',
+    shortLabel: 'Curious Visitor',
+    icon: Compass,
+    accent: 'text-sky-800 border-sky-300 bg-sky-50',
+    desc: 'Explainer mode & multi-agent reasoning'
+  },
   {
     id: 'skipper',
     label: 'Vessel Skipper / Fisherman',
@@ -95,12 +106,39 @@ export default function Advisory() {
   const userRole = user?.role || activeRole || 'skipper'
   const currentRole = (() => {
     const lower = (userRole || '').toLowerCase()
+    if (lower.includes('public') || lower.includes('visit') || lower.includes('guest') || lower.includes('curious')) return 'public'
     if (lower.includes('fish') || lower.includes('skip') || lower.includes('boat')) return 'skipper'
     if (lower.includes('officer') || lower.includes('guard') || lower.includes('patrol')) return 'officer'
     if (lower.includes('research') || lower.includes('scien') || lower.includes('ocean')) return 'researcher'
     if (lower.includes('port') || lower.includes('trade') || lower.includes('harbor')) return 'port_crew'
     return 'skipper'
   })()
+
+  const [selectedRegionId, setSelectedRegionId] = useState(() => {
+    try {
+      return localStorage.getItem('orca_selected_region') || 'bay-of-bengal'
+    } catch {
+      return 'bay-of-bengal'
+    }
+  })
+
+  const [selectedPortId, setSelectedPortId] = useState(() => {
+    try {
+      return localStorage.getItem('orca_selected_port') || 'kolkata-haldia'
+    } catch {
+      return 'kolkata-haldia'
+    }
+  })
+
+  const activeRegion = useMemo(() => getRegionById(selectedRegionId) || REGIONS[0], [selectedRegionId])
+  const portsInRegion = useMemo(() => getPortsByRegion(selectedRegionId), [selectedRegionId])
+  const activePort = useMemo(() => {
+    const found = getPortById(selectedPortId)
+    if (found && found.regionId === selectedRegionId) return found
+    return portsInRegion[0] || PORTS[0]
+  }, [selectedPortId, selectedRegionId, portsInRegion])
+
+  const activePortZones = useMemo(() => getZonesByPort(activePort?.id || 'kolkata-haldia'), [activePort])
 
   const [scanDate, setScanDate] = useState(todayStr())
   const [results, setResults] = useState(null)
@@ -109,7 +147,7 @@ export default function Advisory() {
   const [backendLive, setBackendLive] = useState(true)
   const [cachedScanInfo, setCachedScanInfo] = useState(null)
   const [showVesselRadar, setShowVesselRadar] = useState(false)
-  const [showDemoModal, setShowDemoModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   // Skipper Shortlist (pinned usual zones stored in localStorage)
   const [usualZones, setUsualZones] = useState(() => {
@@ -160,8 +198,11 @@ export default function Advisory() {
     { key: 'sustain', icon: ShieldAlert, color: 'text-red-600', label: t('stations', 'sustainName'), sub: t('stations', 'sustainSub') }
   ]
 
-  const runScan = async (date = scanDate, delay = 600) => {
+  const runScan = async (date = scanDate, delay = 600, targetPortId = activePort?.id, targetRegionId = selectedRegionId) => {
     setScanning(true)
+    const portToScan = targetPortId || activePort?.id || 'kolkata-haldia'
+    const regionToScan = targetRegionId || selectedRegionId || 'bay-of-bengal'
+    const targetZones = getZonesByPort(portToScan)
 
     // Attempt scan via FastAPI backend first
     try {
@@ -171,7 +212,7 @@ export default function Advisory() {
       const res = await fetch('/api/advisory/scan', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ date })
+        body: JSON.stringify({ date, port_id: portToScan, region_id: regionToScan })
       })
 
       if (res.ok) {
@@ -184,6 +225,8 @@ export default function Advisory() {
           localStorage.setItem('orca_last_scan', JSON.stringify({
             results: backendData,
             scanDate: date,
+            portId: portToScan,
+            regionId: regionToScan,
             timestamp: new Date().toISOString()
           }))
         } catch (e) {}
@@ -197,7 +240,7 @@ export default function Advisory() {
     // Fallback to client-side deterministic evaluation
     setTimeout(() => {
       try {
-        const scanned = scanCoastline(zones, date)
+        const scanned = scanCoastline(targetZones, date)
         setResults(scanned)
         setSelectedId(scanned[0]?.zoneId ?? null)
         setBackendLive(false)
@@ -206,6 +249,8 @@ export default function Advisory() {
           localStorage.setItem('orca_last_scan', JSON.stringify({
             results: scanned,
             scanDate: date,
+            portId: portToScan,
+            regionId: regionToScan,
             timestamp: new Date().toISOString()
           }))
         } catch (e) {}
@@ -226,22 +271,52 @@ export default function Advisory() {
     }, delay)
   }
 
-
-  // Auto-run on initial deck load
+  // Auto-run on initial deck load or when active port changes
   useEffect(() => {
-    runScan(scanDate, 600)
-  }, [])
+    runScan(scanDate, 500, activePort?.id, selectedRegionId)
+  }, [activePort?.id, selectedRegionId])
 
   const handleDateChange = (newDate) => {
     setScanDate(newDate)
-    runScan(newDate, 500)
+    runScan(newDate, 400, activePort?.id, selectedRegionId)
   }
 
-  const isBanActive = (() => {
+  const handleSelectPort = (newPortId) => {
+    setSelectedPortId(newPortId)
+    try {
+      localStorage.setItem('orca_selected_port', newPortId)
+    } catch (e) {}
+    runScan(scanDate, 400, newPortId, selectedRegionId)
+  }
+
+  const handleSelectRegion = (newRegionId) => {
+    setSelectedRegionId(newRegionId)
+    try {
+      localStorage.setItem('orca_selected_region', newRegionId)
+    } catch (e) {}
+    const newPorts = getPortsByRegion(newRegionId)
+    const firstPortId = newPorts[0]?.id || 'kolkata-haldia'
+    setSelectedPortId(firstPortId)
+    try {
+      localStorage.setItem('orca_selected_port', firstPortId)
+    } catch (e) {}
+    runScan(scanDate, 400, firstPortId, newRegionId)
+  }
+
+  // Region-aware Statutory Fishing Ban window
+  const isBanActive = useMemo(() => {
     const d = new Date(scanDate)
-    const y = d.getFullYear()
-    return d >= new Date(`${y}-04-15`) && d <= new Date(`${y}-06-14`)
-  })()
+    const m = d.getMonth() + 1
+    const day = d.getDate()
+    const md = m * 100 + day
+    const isWestCoast = selectedRegionId === 'arabian-sea' || selectedRegionId === 'lakshadweep'
+    if (isWestCoast) {
+      // West Coast: June 1 (0601) to July 31 (0731)
+      return md >= 601 && md <= 731
+    }
+    // East Coast & Andaman: April 15 (0415) to June 14 (0614)
+    return md >= 415 && md <= 614
+  }, [scanDate, selectedRegionId])
 
   // ---------------------------------------------------------------------------
   // Scientist dynamic weight recalculation (client-side only, non-destructive)
@@ -459,7 +534,7 @@ export default function Advisory() {
               <span>{backendLive ? 'FastAPI Telemetry: Online' : 'Client Mode: Active'}</span>
             </span>
             <div className="text-xs text-[#5C7788] tabular-nums font-mono">
-              <span>Sector WB-01..WB-06</span>
+              <span>{activePort?.shortName || activePort?.name} · {sortedResults.length || activePortZones.length} Sectors</span>
             </div>
           </div>
         </div>
@@ -512,6 +587,11 @@ export default function Advisory() {
                     <Anchor size={14} className="text-slate-700" />
                     <span>Port Operator / Public Trade</span>
                   </span>
+                ) : currentRole === 'public' ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold text-sky-900 bg-sky-50 border border-sky-300">
+                    <Compass size={14} className="text-sky-700" />
+                    <span>Curious Visitor / General Public</span>
+                  </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300">
                     <Ship size={14} className="text-emerald-700" />
@@ -520,9 +600,9 @@ export default function Advisory() {
                 )}
 
                 <div className="text-xs text-[#0A1B27] font-semibold">
-                  <span>{user?.full_name || (currentRole === 'skipper' ? 'Capt. Rajesh Mondal' : currentRole === 'officer' ? 'Dr. Ananya Sen' : currentRole === 'researcher' ? 'Dr. Priya Sharma' : 'Capt. B. K. Halder')}</span>
+                  <span>{user?.full_name || (currentRole === 'public' ? 'Aarav Mehta' : currentRole === 'skipper' ? 'Capt. Rajesh Mondal' : currentRole === 'officer' ? 'Dr. Ananya Sen' : currentRole === 'researcher' ? 'Dr. Priya Sharma' : 'Capt. B. K. Halder')}</span>
                   <span className="text-[#5C7788] font-normal ml-1.5">
-                    ({user?.vessel_name || user?.department || (currentRole === 'skipper' ? 'FB Maa Ganga · Shankarpur' : currentRole === 'officer' ? 'INCOIS Oceanographic' : currentRole === 'researcher' ? 'CSIR-NIO' : 'Sagar Roads Anchorage')})
+                    ({user?.vessel_name || user?.department || (currentRole === 'public' ? 'Visitor & Education Deck · Bay of Bengal' : currentRole === 'skipper' ? 'FB Maa Ganga · Shankarpur' : currentRole === 'officer' ? 'INCOIS Oceanographic' : currentRole === 'researcher' ? 'CSIR-NIO' : 'Sagar Roads Anchorage')})
                   </span>
                 </div>
               </div>
@@ -554,6 +634,142 @@ export default function Advisory() {
         </div>
 
         {/* ------------------------------------------------------------------- */}
+        {/* PAN-INDIA MARITIME REGION & MAJOR PORT COMMAND BAR                 */}
+        {/* ------------------------------------------------------------------- */}
+        <div className="bg-white border border-[#CCE4EC] p-4 sm:p-5 mb-5 rounded-xl shadow-xs">
+          
+          {/* Top Row: Sea Region Indicator & Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#E0EEF3]">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-900 bg-cyan-50 border border-cyan-300 px-2 py-0.5 rounded flex items-center gap-1.5">
+                <Compass size={12} className="text-cyan-700" />
+                <span>ACTIVE SEA REGION</span>
+              </span>
+              <span className="font-serif text-base sm:text-lg font-bold text-[#0A1B27]">
+                {activeRegion?.name}
+              </span>
+              <span className="text-xs font-mono text-[#5C7788] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                {activeRegion?.coastlineKm?.toLocaleString('en-IN')} km Coastline
+              </span>
+              <span className="text-xs text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                Uniform Ban: {activeRegion?.banPeriod || 'Seasonal'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                to="/regions"
+                className="inline-flex items-center gap-1.5 text-xs text-[#007A78] hover:text-[#005A58] font-bold bg-[#E2F0F5] hover:bg-[#D4EAF1] border border-[#BCDCE6] px-2.5 py-1 rounded-md transition-colors"
+                title="Change Sea Region"
+              >
+                <MapPin size={13} />
+                <span>All 4 Sea Regions</span>
+                <ArrowRight size={12} />
+              </Link>
+            </div>
+          </div>
+
+          {/* Sea Region Selector Quick Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 border-b border-slate-100 text-xs scrollbar-none">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 shrink-0 font-mono">
+              REGION:
+            </span>
+            {REGIONS.map((r) => {
+              const isSelected = r.id === selectedRegionId
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => handleSelectRegion(r.id)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer shrink-0 border flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'bg-[#0A1B27] text-cyan-300 border-slate-700 shadow-xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <span>{r.name}</span>
+                  <span className={`text-[10px] px-1 rounded font-mono ${
+                    isSelected ? 'bg-cyan-950 text-cyan-400' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {r.portsCount} Ports
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Major Ports Selector Tabs in Active Region */}
+          <div className="pt-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 font-mono">
+                <Anchor size={13} className="text-[#007A78]" />
+                <span>MAJOR PORTS & OPERATIONAL HARBORS ({portsInRegion.length})</span>
+              </div>
+              <span className="text-[11px] text-slate-500 font-mono">
+                Select port to load local bathymetry & sub-zones
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {portsInRegion.map((p) => {
+                const isActive = p.id === activePort?.id
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleSelectPort(p.id)}
+                    className={`px-3 py-2 rounded-lg text-xs transition-all cursor-pointer border flex items-center gap-2 ${
+                      isActive
+                        ? 'bg-[#007A78] text-white border-[#007A78] font-bold shadow-xs ring-2 ring-[#007A78]/20'
+                        : 'bg-white hover:bg-[#F0F8FA] text-[#2D4454] border-[#CCE4EC] font-semibold hover:border-[#007A78]/40'
+                    }`}
+                  >
+                    <Anchor size={13} className={isActive ? 'text-cyan-200' : 'text-[#007A78]'} />
+                    <span>{p.name}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {p.subZones?.length || 4} Sectors
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Active Port Baseline Card */}
+            {activePort && (
+              <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-bold text-[#0A1B27]">
+                    {activePort.fullName || activePort.name}
+                  </span>
+                  <span className="text-[#5C7788] hidden sm:inline">•</span>
+                  <span className="text-slate-600 font-mono">
+                    State: <strong>{activePort.state}</strong>
+                  </span>
+                  <span className="text-[#5C7788] hidden sm:inline">•</span>
+                  <span className="text-slate-600 font-mono">
+                    Approach Depth: <strong>{activePort.navigationalDepth || (activePort.depthMax_m ? `${activePort.depthMax_m}m` : '12.5m Channel')}</strong>
+                  </span>
+                  <span className="text-[#5C7788] hidden sm:inline">•</span>
+                  <span className="text-slate-600 font-mono">
+                    Position: <strong>{(activePort.coordinates?.lat ?? activePort.lat ?? 21.65).toFixed(2)}°N, {(activePort.coordinates?.lng ?? activePort.lng ?? 87.85).toFixed(2)}°E</strong>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#5C7788] font-mono shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Authority: {activePort.harborMaster || activePort.harborAuthority || 'Major Port Authority'}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------------- */}
         {/* Working Bridge Control Deck                                         */}
         {/* ------------------------------------------------------------------- */}
         <div className="bg-white border border-[#CCE4EC] p-5 sm:p-6 mb-6 shadow-sm rounded-xl">
@@ -563,7 +779,9 @@ export default function Advisory() {
               <div className="flex items-center gap-2 text-xs text-[#007A78] font-bold uppercase tracking-wider mb-1.5">
                 <Compass size={14} />
                 <span>
-                  {currentRole === 'skipper'
+                  {currentRole === 'public'
+                    ? 'ORCA MULTI-AGENT EXPLAINER CONSOLE'
+                    : currentRole === 'skipper'
                     ? 'WHEELHOUSE FISHING ADVISORY'
                     : currentRole === 'officer'
                     ? 'COASTAL COMPLIANCE & PATROL DESK'
@@ -573,7 +791,9 @@ export default function Advisory() {
                 </span>
               </div>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0A1B27] tracking-tight">
-                {currentRole === 'skipper'
+                {currentRole === 'public'
+                  ? `How ORCA Evaluates ${activePort?.shortName || activePort?.name} Fishing Grounds`
+                  : currentRole === 'skipper'
                   ? 'Daily Vessel Clearance & Best Fishing Ground'
                   : currentRole === 'officer'
                   ? 'Maritime Fisheries Regulatory Enforcement'
@@ -582,13 +802,15 @@ export default function Advisory() {
                   : 'Harbor Fish Landing & Cold-Chain Projections'}
               </h1>
               <p className="text-xs text-[#2D4454] mt-1 max-w-2xl">
-                {currentRole === 'skipper'
-                  ? 'Immediate dawn sailing decision. Instant weather safety verification and highest-yield coordinates along the West Bengal shelf.'
+                {currentRole === 'public'
+                  ? `Interactive explainer mode demonstrating how four autonomous agents combine satellite temperatures, wind ceilings, and conservation mandates into transparent verdicts across ${activePort?.name}.`
+                  : currentRole === 'skipper'
+                  ? `Immediate dawn sailing decision. Instant weather safety verification and highest-yield coordinates around ${activePort?.name} (${activeRegion?.name}).`
                   : currentRole === 'officer'
-                  ? 'Real-time surveillance across 6 patrol sectors. Instant flag checks against the uniform 61-day breeding ban and marine sanctuary borders.'
+                  ? `Real-time surveillance across ${activePortZones.length} patrol sectors. Instant flag checks against the uniform 61-day breeding ban and marine sanctuary borders.`
                   : currentRole === 'researcher'
-                  ? 'Inspection of raw OCM-3/INCOIS thermal fronts, chlorophyll blooms, and adjustable agent weight sensitivity coefficients.'
-                  : 'Aggregate biomass forecasts derived across West Bengal harbor landing centers for cold-chain scheduling and trade distribution.'}
+                  ? `Inspection of raw thermal fronts, chlorophyll blooms, and adjustable agent weight sensitivity coefficients for ${activePort?.name}.`
+                  : `Aggregate biomass forecasts derived across ${activePort?.name} harbor landing centers for cold-chain scheduling and trade distribution.`}
               </p>
             </div>
 
@@ -604,12 +826,25 @@ export default function Advisory() {
                 }`}
               >
                 <Radio size={14} className="animate-pulse text-emerald-400" />
-                <span>Live Bay of Bengal AIS</span>
+                <span>Live {activePort?.shortName || 'Maritime'} AIS</span>
                 <span className="text-[10px] bg-cyan-950 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-800 font-mono">
-                  14 Ships
+                  {activePortZones.length * 2 + 6} Ships
                 </span>
               </button>
-              <ScenarioDatePicker date={scanDate} onChange={handleDateChange} />
+              {selected && (
+                <button
+                  type="button"
+                  onClick={() => setShowShareModal(true)}
+                  className="px-3 py-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  title="Generate shareable recommendation graphic"
+                >
+                  <Sparkles size={13} className="text-[#007A78]" />
+                  <span>Share Card</span>
+                </button>
+              )}
+              {currentRole !== 'public' && (
+                <ScenarioDatePicker date={scanDate} onChange={handleDateChange} />
+              )}
               <ScanButton onScan={() => runScan()} scanning={scanning} hasResults={!!results} />
             </div>
           </div>
@@ -653,12 +888,35 @@ export default function Advisory() {
           )}
         </div>
 
-        {/* Live Bay of Bengal AIS Vessel Radar Drawer */}
+        {/* Live Regional AIS Vessel Radar Drawer */}
         {showVesselRadar && (
           <div className="mb-6">
             <LiveVesselTracker
               onClose={() => setShowVesselRadar(false)}
               onSelectSector={(id) => setSelectedId(id)}
+              regionId={selectedRegionId}
+              portId={activePort?.id}
+              zonesList={activePortZones}
+            />
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------------- */}
+        {/* ROLE 5: CURIOUS VISITOR — EXPLAINER DECK & ANNUAL SCENARIO SLIDER   */}
+        {/* ------------------------------------------------------------------- */}
+        {currentRole === 'public' && (
+          <div className="flex flex-col gap-5 mb-6">
+            <ScenarioSlider
+              date={scanDate}
+              regionId={selectedRegionId}
+              onChange={handleDateChange}
+              isScanning={scanning}
+            />
+            <PublicExplainerDeck
+              results={processedResults || []}
+              selectedZone={selected}
+              scanDate={scanDate}
+              onSelectZone={(id) => setSelectedId(id)}
             />
           </div>
         )}
@@ -666,7 +924,7 @@ export default function Advisory() {
         {/* ------------------------------------------------------------------- */}
         {/* ROLE 1: VESSEL SKIPPER — "BEST ZONE TODAY" HERO CARD & SKIPPER DECK */}
         {/* ------------------------------------------------------------------- */}
-        {!scanning && currentRole === 'skipper' && (
+        {currentRole === 'skipper' && (
           <div className="flex flex-col gap-5 mb-6">
             {bestZoneToday && (
               <div className="bg-white border-2 border-emerald-500/80 rounded-xl p-5 sm:p-6 shadow-sm">
@@ -749,7 +1007,7 @@ export default function Advisory() {
         {/* ------------------------------------------------------------------- */}
         {/* ROLE 4: PORT OPERATOR — "EXPECTED LANDING VOLUME" & PORT LOGISTICS  */}
         {/* ------------------------------------------------------------------- */}
-        {!scanning && currentRole === 'port_crew' && (
+        {currentRole === 'port_crew' && (
           <div className="flex flex-col gap-5 mb-6">
             <div className="bg-white border border-[#CCE4EC] rounded-xl p-5 sm:p-6 shadow-sm">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-4 border-b border-slate-200">
@@ -806,7 +1064,7 @@ export default function Advisory() {
         {/* ------------------------------------------------------------------- */}
         {/* ROLE 3: MARINE SCIENTIST — TELEMETRY LAB & SENSITIVITY DECK        */}
         {/* ------------------------------------------------------------------- */}
-        {!scanning && currentRole === 'researcher' && (
+        {currentRole === 'researcher' && (
           <ScientistDeck
             results={processedResults || []}
             scanDate={scanDate}
@@ -821,7 +1079,7 @@ export default function Advisory() {
         {/* ------------------------------------------------------------------- */}
         {/* ROLE 2: GOVERNMENT / MARINE OFFICER — PATROL DESK & PRIMARY MAP     */}
         {/* ------------------------------------------------------------------- */}
-        {!scanning && currentRole === 'officer' && (
+        {currentRole === 'officer' && (
           <div className="flex flex-col gap-5 mb-6">
             <OfficerDeck
               results={processedResults || []}
@@ -832,6 +1090,9 @@ export default function Advisory() {
             />
             <CoastlineMap
               role={currentRole}
+              regionId={selectedRegionId}
+              portId={activePort?.id}
+              zonesList={activePortZones}
               results={sortedResults}
               selectedId={selectedId}
               onSelect={(id) => setSelectedId(id)}
@@ -899,6 +1160,9 @@ export default function Advisory() {
                 <div className="mt-4">
                   <CoastlineMap
                     role={currentRole}
+                    regionId={selectedRegionId}
+                    portId={activePort?.id}
+                    zonesList={activePortZones}
                     results={sortedResults}
                     selectedId={selectedId}
                     onSelect={(id) => setSelectedId(id)}
@@ -925,34 +1189,12 @@ export default function Advisory() {
         )}
 
         {/* ------------------------------------------------------------------- */}
-        {/* Full-Width Hydrographic Sounding Profile Section at the Bottom       */}
+        {/* Full-Width Bookmark Sector Card at Bottom                           */}
         {/* ------------------------------------------------------------------- */}
-        {!scanning && sortedResults.length > 0 && selected && (
+        {sortedResults.length > 0 && selected && (
           <div className="w-full mt-6 flex flex-col gap-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-              <div className="text-sm sm:text-base font-serif font-bold text-[#0A1B27] flex items-center gap-2">
-                <Compass size={16} className="text-[#007A78]" />
-                <span>Hydrographic Sounding Profile · {selected.zoneName}</span>
-              </div>
-              <div className="text-xs text-[#5C7788] font-mono flex items-center gap-2">
-                <span>Sector {selected.sectorCode}</span>
-                <span>•</span>
-                <span>{selected.distanceOffshore} Offshore</span>
-                <span>•</span>
-                <span className="text-[#007A78] font-bold">{selected.soundingDepth}m LAT Sounding</span>
-              </div>
-            </div>
-
-            <BathymetricSounder
-              activeZoneId={selected.zoneId}
-              compact={false}
-              panoramic={true}
-              interactive={true}
-              onSelectZone={(id) => setSelectedId(id)}
-            />
-
             {/* Full-Width Bookmark Sector Card */}
-            <div className="bg-white border border-[#CCE4EC] p-3 sm:p-3.5 flex items-center justify-between text-xs shadow-xs rounded-xl">
+            <div className="bg-white border border-[#CCE4EC] p-3.5 sm:p-4 flex items-center justify-between text-xs shadow-xs rounded-xl">
               <div className="flex items-center gap-2.5 sm:gap-3">
                 <div className="p-1.5 bg-[#E2F0F5] rounded-lg shrink-0">
                   <Bookmark
@@ -1004,11 +1246,14 @@ export default function Advisory() {
 
       </main>
 
-      {/* Global 1-Click Demo Persona Switcher Modal */}
-      <DemoSwitcherModal
-        isOpen={showDemoModal}
-        onClose={() => setShowDemoModal(false)}
-      />
+      {/* Shareable Result Graphic Modal */}
+      {selected && (
+        <ShareableResultCard
+          zone={selected}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
 
       {/* Advisory Console Footer */}
       <footer className="border-t border-[#BCDCE6] bg-[#E2F0F5] py-5 px-4 sm:px-6 mt-auto text-[11px] text-[#5C7788]">

@@ -1,22 +1,20 @@
-import { lazy, Suspense } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Compass, TableProperties, ShieldCheck, Radio } from 'lucide-react'
+import { Compass, TableProperties, ShieldCheck, Radio, Ship } from 'lucide-react'
 import BathymetricSounder from './BathymetricSounder.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 
-const OceanShader = lazy(() => import('./OceanShader.jsx'))
-
 export default function Hero() {
   const { t } = useLanguage()
+  const [chartInfo, setChartInfo] = useState({
+    chartTitle: 'Chart IN-351: Northern Bengal Shelf & Canyon Head',
+    chartMeta: "Scale 1:150,000 · Mercator Projection · LAT 20°40'N – 21°55'N · LONG 86°50'E – 89°20'E",
+    beaconStatus: 'Acoustic Beacon 74 Online'
+  })
 
   return (
-    <section id="home" className="relative w-full pt-28 pb-16 px-4 sm:px-6 bg-[#EAF4F8] border-b border-[#CCE4EC] overflow-hidden">
-      {/* Lazy-Loaded Ambient Wave Shader Canvas with Visibility & Battery Guards */}
-      <Suspense fallback={null}>
-        <OceanShader />
-      </Suspense>
-
-      <div className="max-w-7xl mx-auto relative z-10">
+    <section id="home" className="relative w-full pt-28 pb-16 px-4 sm:px-6 bg-[#EAF4F8] border-b border-[#CCE4EC]">
+      <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* Left Column (5 cols): Authoritative Hydrographic Dispatch */}
@@ -47,18 +45,18 @@ export default function Hero() {
             <div className="flex flex-wrap items-center gap-3 mb-8 w-full sm:w-auto">
               <Link
                 to="/advisory"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98] rounded focus-visible:ring-2 focus-visible:ring-[#007A78] focus-visible:outline-none"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
               >
-                <Compass size={14} className="text-white" />
+                <Compass size={14} className="text-[#007A78]" />
                 <span>{t('hero', 'openAdvisory')}</span>
               </Link>
-              <a
-                href="#zones"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-5 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors rounded focus-visible:ring-2 focus-visible:ring-[#007A78] focus-visible:outline-none"
+              <Link
+                to="/regions"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-5 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors"
               >
-                <TableProperties size={14} className="text-[#007A78]" />
-                <span>{t('hero', 'viewPortLogs')}</span>
-              </a>
+                <Ship size={14} className="text-[#007A78]" />
+                <span>Select Sea Basin</span>
+              </Link>
             </div>
 
             {/* Open Station Facts separated by subtle rules */}
@@ -98,20 +96,29 @@ export default function Hero() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-[#E0EEF3] text-xs">
                 <div>
                   <h3 className="font-serif font-bold text-[#0A1B27] text-base sm:text-lg">
-                    {t('hero', 'chartTitle')}
+                    {chartInfo.chartTitle}
                   </h3>
                   <div className="text-[11px] text-[#5C7788] tabular-nums mt-0.5">
-                    {t('hero', 'chartMeta')}
+                    {chartInfo.chartMeta}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 self-start sm:self-auto bg-[#E1F3F5] text-[#007A78] border border-[#B9E4E8] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
                   <Radio size={11} className="animate-pulse" />
-                  <span>{t('hero', 'beaconStatus')}</span>
+                  <span>{chartInfo.beaconStatus}</span>
                 </div>
               </div>
 
               {/* Bathymetric Sounder Instrument */}
-              <BathymetricSounder interactive={true} />
+              <BathymetricSounder
+                interactive={true}
+                onCorridorChange={(info) => {
+                  setChartInfo({
+                    chartTitle: info.chartTitle,
+                    chartMeta: info.chartMeta,
+                    beaconStatus: info.beaconStatus
+                  })
+                }}
+              />
 
               <div className="mt-3 flex items-center justify-between text-xs text-[#5C7788] pt-2 border-t border-[#E0EEF3]">
                 <span className="flex items-center gap-1.5 text-[#007A78] font-medium text-[11px]">
@@ -130,5 +137,3 @@ export default function Hero() {
     </section>
   )
 }
-
-

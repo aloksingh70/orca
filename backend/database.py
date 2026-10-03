@@ -38,6 +38,16 @@ def init_db():
             except Exception:
                 pass
 
+        for col, col_type in [
+            ("port_id", "VARCHAR(50) DEFAULT 'kolkata-haldia'"),
+            ("region_id", "VARCHAR(50) DEFAULT 'bay-of-bengal'")
+        ]:
+            try:
+                conn.execute(text(f"ALTER TABLE zones ADD COLUMN {col} {col_type}"))
+                conn.commit()
+            except Exception:
+                pass
+
 def get_db():
     """Dependency providing database session per request."""
     db = SessionLocal()

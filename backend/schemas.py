@@ -80,6 +80,8 @@ class ZoneOut(BaseModel):
     id: str
     name: str
     sector_code: str
+    port_id: Optional[str] = "kolkata-haldia"
+    region_id: Optional[str] = "bay-of-bengal"
     distance_offshore: str
     sounding_depth: int
     seabed: str
@@ -137,6 +139,10 @@ class ScanResult(BaseModel):
 class ScanRequest(BaseModel):
     date: Optional[str] = None # ISO format YYYY-MM-DD
     zone_ids: Optional[List[str]] = None
+    region: Optional[str] = None
+    port: Optional[str] = None
+    port_id: Optional[str] = None
+    region_id: Optional[str] = None
 
 class VesselOut(BaseModel):
     mmsi: str

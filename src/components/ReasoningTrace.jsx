@@ -112,6 +112,26 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
       verdictHeadline = 'Moderate Catch Volume Expected'
       noteText = 'Average catch yield expected today. Standard auction and refrigerated transport logistics.'
     }
+  } else if (role === 'public') {
+    if (isBanVeto) {
+      verdictColor = 'text-rose-950 border-rose-300 bg-rose-50'
+      VerdictIcon = XCircle
+      verdictHeadline = 'Annual Breeding Ban — Sector Closed for Marine Spawning'
+      noteText = "Even though ocean temperatures or catch history may look favorable, the Sustainability Agent's veto overrides everything. Fishing is legally prohibited to protect spawning fish and juvenile populations."
+    } else if (isWeatherVeto) {
+      verdictColor = 'text-rose-950 border-rose-300 bg-rose-50'
+      VerdictIcon = AlertTriangle
+      verdictHeadline = 'Severe Wave Chop / Squall Hazard — Unsafe for Small Craft'
+      noteText = "Even though fish may be active, the Weather Agent's safety veto overrides everything. Waves and wind exceed safe thresholds for small motorized boats — human lives always come first."
+    } else if (isRecommended) {
+      verdictColor = 'text-emerald-950 border-emerald-300 bg-emerald-50'
+      VerdictIcon = CheckCircle2
+      verdictHeadline = 'Recommended Fishing Ground — Safe Sea State & Active Schools'
+      noteText = 'All four agents agree: sea temperatures are in the optimal feeding range, winds and waves are calm, and seasonal catch history is strong.'
+    } else {
+      verdictHeadline = 'Workable Sea Conditions — Proceed With Prudence'
+      noteText = 'Conditions are workable but sea chop is noticeable. Check individual agent ratings below before committing a trip.'
+    }
   } else {
     // researcher
     if (isBanVeto) {
@@ -176,6 +196,18 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
             </span>
           ))}
         </div>
+        {role === 'public' && (
+          <div className="mb-2.5 p-2 rounded bg-sky-50 border border-sky-200 text-xs font-medium text-sky-950 flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${weather?.unsafe ? 'bg-rose-600' : 'bg-sky-600'}`} />
+            <span>
+              {weather?.unsafe
+                ? 'Conditions are rough today — unsafe for small boats.'
+                : weather?.score >= 70
+                ? 'The sea is calm enough today for safe sailing.'
+                : 'Workable sea state today, but expect noticeable chop.'}
+            </span>
+          </div>
+        )}
         <p className="text-xs text-slate-700 leading-relaxed">
           {role === 'skipper'
             ? weather?.unsafe
@@ -194,7 +226,7 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 text-teal-800 text-xs font-bold font-serif">
             <Waves size={15} className="text-emerald-600" />
-            <span>{role === 'skipper' ? 'Fish Feeding & Ocean Water' : 'Ocean Telemetry & Chlorophyll'}</span>
+            <span>{role === 'skipper' ? 'Fish Feeding & Ocean Water' : role === 'public' ? 'Fish Feeding & Ocean Temperature' : 'Ocean Telemetry & Chlorophyll'}</span>
           </div>
           <span className="text-[11px] text-slate-600 tabular-nums font-sans">
             Score: <strong className="text-slate-900 font-bold">{formatScore(ocean?.score)}</strong>/100
@@ -208,6 +240,18 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
             </span>
           ))}
         </div>
+        {role === 'public' && (
+          <div className="mb-2.5 p-2 rounded bg-sky-50 border border-sky-200 text-xs font-medium text-sky-950 flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${ocean?.score >= 65 ? 'bg-emerald-600' : 'bg-sky-600'}`} />
+            <span>
+              {ocean?.score >= 70
+                ? 'Fish are likely gathering here around active plankton blooms.'
+                : ocean?.score >= 45
+                ? 'Moderate feeding activity likely in this sector.'
+                : 'Not the most promising spot today; water temperatures or plankton are low.'}
+            </span>
+          </div>
+        )}
         <p className="text-xs text-slate-700 leading-relaxed">
           {role === 'skipper'
             ? ocean?.score >= 65
@@ -226,7 +270,7 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 text-teal-800 text-xs font-bold font-serif">
             <Fish size={15} className="text-amber-600" />
-            <span>{role === 'port_crew' ? 'Quay-Side Yield Benchmark' : 'Historical Catch Ledger (CMFRI)'}</span>
+            <span>{role === 'port_crew' ? 'Quay-Side Yield Benchmark' : role === 'public' ? '10-Year Catch History (CMFRI)' : 'Historical Catch Ledger (CMFRI)'}</span>
           </div>
           <span className="text-[11px] text-slate-600 tabular-nums font-sans">
             Yield: <strong className="text-slate-900 font-bold">{formatScore(history?.score)}</strong>/100
@@ -240,6 +284,16 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
             </span>
           ))}
         </div>
+        {role === 'public' && (
+          <div className="mb-2.5 p-2 rounded bg-sky-50 border border-sky-200 text-xs font-medium text-sky-950 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
+            <span>
+              {history?.score >= 65
+                ? 'Historically a high-catch month for this zone in CMFRI records.'
+                : 'Historically a quieter, middling catch month for this zone.'}
+            </span>
+          </div>
+        )}
         <p className="text-xs text-slate-700 leading-relaxed">
           {history?.summary}
         </p>
@@ -259,7 +313,7 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 text-xs font-bold font-serif text-slate-900">
             <ShieldAlert size={15} className={sustain?.closed ? 'text-red-700' : 'text-teal-800'} />
-            <span>{role === 'officer' ? 'MFRA Mandate & Sanctuary Boundary' : 'Breeding Ban & Sanctuaries'}</span>
+            <span>{role === 'officer' ? 'MFRA Mandate & Sanctuary Boundary' : role === 'public' ? 'Breeding Ban & Marine Sanctuaries' : 'Breeding Ban & Sanctuaries'}</span>
           </div>
           <span className={`text-[11px] tabular-nums font-sans ${sustain?.closed ? 'text-red-700 font-bold uppercase' : 'text-slate-600'}`}>
             {sustain?.closed ? 'Mandatory Ban Veto' : `Compliance: ${formatScore(sustain?.score)}/100`}
@@ -273,6 +327,16 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
             </span>
           ))}
         </div>
+        {role === 'public' && (
+          <div className="mb-2.5 p-2 rounded bg-sky-50 border border-sky-200 text-xs font-medium text-sky-950 flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sustain?.closed ? 'bg-rose-600' : 'bg-emerald-600'}`} />
+            <span>
+              {sustain?.closed
+                ? 'Mandatory breeding closure active — all motorized fishing suspended by law.'
+                : 'Outside the seasonal ban window — no breeding restrictions apply today.'}
+            </span>
+          </div>
+        )}
         <p className="text-xs text-slate-700 leading-relaxed">
           {role === 'officer'
             ? sustain?.closed
@@ -289,8 +353,8 @@ export default function ReasoningTrace({ result, role = 'skipper' }) {
   // Card Ordering & Collapsing logic per Role
   // ---------------------------------------------------------------------------
   let orderedCards = []
-  if (role === 'skipper') {
-    // Weather leads for Skipper
+  if (role === 'skipper' || role === 'public') {
+    // Weather leads for Skipper and Public
     orderedCards = [renderWeatherCard(), renderOceanCard(), renderHistoryCard(), renderSustainCard()]
   } else if (role === 'officer') {
     // Sustainability leads for Officer

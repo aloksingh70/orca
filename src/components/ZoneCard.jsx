@@ -103,6 +103,24 @@ export default function ZoneCard({
       statusClass = 'border-amber-300 bg-amber-50 text-amber-900 font-bold'
       accentBorder = 'border-l-amber-600'
     }
+  } else if (role === 'public') {
+    if (isBanVeto) {
+      verdictText = 'Breeding Ban (Closed)'
+      statusClass = 'border-rose-300 bg-rose-50 text-rose-800 font-bold'
+      accentBorder = 'border-l-rose-600'
+    } else if (isWeatherVeto) {
+      verdictText = 'Rough Seas Warning'
+      statusClass = 'border-rose-300 bg-rose-50 text-rose-800 font-bold'
+      accentBorder = 'border-l-rose-600'
+    } else if (isRecommended) {
+      verdictText = 'Best Spot Today'
+      statusClass = 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold'
+      accentBorder = 'border-l-emerald-600'
+    } else {
+      verdictText = 'Workable (Caution)'
+      statusClass = 'border-amber-300 bg-amber-50 text-amber-900 font-bold'
+      accentBorder = 'border-l-amber-600'
+    }
   } else {
     // researcher
     if (isVetoed) {
@@ -220,6 +238,20 @@ export default function ZoneCard({
               <span>Anomaly: {anomalyInfo.sstAnomaly ? `SST Δ ${(anomalyInfo.sstDeviation ?? Math.abs(anomalyInfo.sstDiff || 0)).toFixed(1)}°C` : ''} {anomalyInfo.chlAnomaly ? `Chl-a Δ ${(anomalyInfo.chlDeviation ?? Math.abs(anomalyInfo.chlDiff || 0)).toFixed(2)}` : ''}</span>
             </div>
           )}
+
+          {role === 'public' && (
+            <div className="flex items-center gap-1.5 mt-1 text-[11px] text-sky-900 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 w-fit">
+              <span className="font-semibold">
+                {isBanVeto
+                  ? 'Seasonal breeding protection active'
+                  : isWeatherVeto
+                  ? 'Weather safety ceiling tripped'
+                  : isRecommended
+                  ? 'High fish gathering + calm sea state'
+                  : 'Workable sea state'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Verdict Badge */}
@@ -289,6 +321,33 @@ export default function ZoneCard({
               <span className="hidden sm:inline">Peak <strong className="text-slate-700 font-medium">{history.readouts[1].value.replace('/trip', '')}</strong></span>
             )}
             <span className="hidden md:inline text-slate-500 font-medium">{result.harborName}</span>
+          </div>
+        )}
+
+        {/* Role 5: Curious Visitor / Public — Jargon-free translations alongside numbers */}
+        {role === 'public' && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {isBanVeto ? (
+              <span className="text-rose-800 font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                <span>Annual Spawning Sanctuary (Ban Active)</span>
+              </span>
+            ) : isWeatherVeto ? (
+              <span className="text-rose-800 font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                <span>Rough sea warning ({weather?.readouts?.[0]?.value || ''})</span>
+              </span>
+            ) : (
+              <>
+                <span className="text-emerald-800 font-medium">
+                  {weather?.score >= 70 ? 'Sea is calm today' : 'Workable chop'} ({weather?.readouts?.[0]?.value || ''})
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="text-teal-800 font-medium hidden sm:inline">
+                  {ocean?.score >= 65 ? 'Fish gathering likely' : 'Moderate feeding'} ({ocean?.readouts?.[0]?.value || ''})
+                </span>
+              </>
+            )}
           </div>
         )}
 

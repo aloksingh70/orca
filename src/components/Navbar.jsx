@@ -1,27 +1,37 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Compass, KeyRound, LogOut, Ship, ShieldCheck, Anchor, Sparkles } from 'lucide-react'
+import { Menu, X, Compass, KeyRound, LogOut, Ship, ShieldCheck, Anchor, Sparkles, MapPin } from 'lucide-react'
 import Logo from './Logo.jsx'
 import LanguageSelector from './LanguageSelector.jsx'
-import DemoSwitcherModal from './DemoSwitcherModal.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { getRegionById } from '../lib/regions.js'
 
-export default function Navbar() {
+export default function Navbar({ darkGlass = false }) {
   const [open, setOpen] = useState(false)
-  const [showDemoModal, setShowDemoModal] = useState(false)
   const [timeStr, setTimeStr] = useState('')
+  const [currentRegionId, setCurrentRegionId] = useState(() => {
+    try {
+      return localStorage.getItem('orca_selected_region') || 'bay-of-bengal'
+    } catch {
+      return 'bay-of-bengal'
+    }
+  })
   const location = useLocation()
   const isAdvisory = location.pathname === '/advisory'
   const isLogin = location.pathname === '/login'
   const { t } = useLanguage()
   const { user, isAuthenticated, logout } = useAuth()
 
+  const currentRegion = getRegionById(currentRegionId)
+
   const navLinks = [
+    { label: 'Sea Regions', href: '/regions' },
     { label: t('nav', 'operationalTransition'), href: '/#operational-reality' },
     { label: t('nav', 'bridgeStations'), href: '/#agents' },
     { label: t('nav', 'fleetLedger'), href: '/#zones' },
     { label: t('nav', 'banMandate'), href: '/#ban-mandate' },
+    { label: 'About', href: '/about' },
     { label: 'FAQ', href: '/#faq' }
   ]
 
@@ -52,27 +62,40 @@ export default function Navbar() {
         Skip to main content
       </a>
 
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 border-b border-[#CCE4EC] backdrop-blur-md">
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-colors ${
+        darkGlass
+          ? 'bg-[#031520]/80 border-b border-white/10 backdrop-blur-xl text-white'
+          : 'bg-white/95 border-b border-[#CCE4EC] backdrop-blur-md text-[#2D4454]'
+      }`}>
         {/* Indian National Tricolor Accent Ribbon */}
         <div className="tricolor-ribbon w-full" />
 
       {/* Top Institutional Bar */}
-      <div className="border-b border-[#BCDCE6] bg-[#E2F0F5] px-4 sm:px-6 py-1.5 text-[11px] text-[#2D4454] flex items-center justify-between">
+      <div className={`px-4 sm:px-6 py-1.5 text-[11px] flex items-center justify-between transition-colors ${
+        darkGlass
+          ? 'border-b border-white/10 bg-[#071927]/90 text-slate-300'
+          : 'border-b border-[#BCDCE6] bg-[#E2F0F5] text-[#2D4454]'
+      }`}>
         <div className="flex items-center gap-2">
-          <span className="font-bold text-[#0A1B27] tracking-wide">
+          <span className={`font-bold tracking-wide ${darkGlass ? 'text-white' : 'text-[#0A1B27]'}`}>
             {t('nav', 'gov')}
           </span>
-          <span className="hidden md:inline text-[#809BAA]">|</span>
-          <span className="hidden md:inline font-medium text-[#2D4454]">
+          <span className="hidden md:inline opacity-40">|</span>
+          <span className={`hidden md:inline font-medium ${darkGlass ? 'text-slate-300' : 'text-[#2D4454]'}`}>
             {t('nav', 'sub')}
           </span>
         </div>
         <div className="flex items-center gap-3 tabular-nums text-[10px] sm:text-[11px]">
-          <span className="hidden sm:inline text-[#E86014] font-bold">
-            {t('nav', 'bengalTag')}
-          </span>
-          <span className="flex items-center gap-1.5 text-[#0A1B27] font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#007A78] animate-pulse" />
+          <Link
+            to="/regions"
+            className="hidden sm:inline-flex items-center gap-1.5 text-[#E86014] hover:text-[#FF7722] font-bold transition-colors"
+            title="Switch Sea Region"
+          >
+            <span>{currentRegion?.name || 'Pan-India Maritime'} Corridor</span>
+            <span className="text-[10px] bg-orange-500/20 text-orange-300 px-1.5 py-0.2 rounded font-mono border border-orange-400/30">Switch</span>
+          </Link>
+          <span className={`flex items-center gap-1.5 font-bold ${darkGlass ? 'text-white' : 'text-[#0A1B27]'}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#17A398] animate-pulse" />
             {timeStr || '19:15:00 IST'}
           </span>
         </div>
@@ -83,13 +106,13 @@ export default function Navbar() {
         {/* Left: Logo & Station */}
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center">
-            <Logo className="h-8 w-auto" />
+            <Logo className={`h-8 w-auto ${darkGlass ? 'brightness-110' : ''}`} />
           </Link>
-          <div className="hidden xl:flex flex-col border-l border-[#CCE4EC] pl-3 text-xs leading-tight">
-            <span className="font-serif text-[#0A1B27] font-bold">
+          <div className={`hidden xl:flex flex-col border-l pl-3 text-xs leading-tight ${darkGlass ? 'border-white/10' : 'border-[#CCE4EC]'}`}>
+            <span className={`font-serif font-bold ${darkGlass ? 'text-white' : 'text-[#0A1B27]'}`}>
               {t('nav', 'sagarRoads')}
             </span>
-            <span className="font-sans text-[10px] text-[#5C7788] tabular-nums font-medium">
+            <span className={`font-sans text-[10px] tabular-nums font-medium ${darkGlass ? 'text-slate-400' : 'text-[#5C7788]'}`}>
               {t('nav', 'hooghlyDelta')}
             </span>
           </div>
@@ -101,7 +124,7 @@ export default function Navbar() {
             <a
               key={link.label}
               href={link.href}
-              className="text-[#0A1B27] hover:text-[#007A78] transition-colors"
+              className={darkGlass ? 'text-slate-200 hover:text-teal-300 transition-colors' : 'text-[#0A1B27] hover:text-[#007A78] transition-colors'}
             >
               {link.label}
             </a>
@@ -116,18 +139,7 @@ export default function Navbar() {
           {/* User Auth Status / Sign In Button */}
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDemoModal(true)}
-                className="hidden sm:inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 py-1 px-2.5 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-                title="Switch between demo personas"
-              >
-                <Sparkles size={13} className="text-amber-600" />
-                <span className="hidden md:inline">Switch Persona</span>
-                <span className="md:hidden">Demo</span>
-              </button>
-
-              <div className="hidden sm:flex items-center gap-2 bg-[#E2F0F5] border border-[#BCDCE6] py-1 px-2.5 rounded-lg text-xs shadow-2xs">
+              <div className="flex items-center gap-2 bg-[#E2F0F5] border border-[#BCDCE6] py-1 px-2.5 rounded-lg text-xs shadow-2xs">
                 <div className="flex items-center gap-1.5 font-bold text-[#0A1B27]">
                   {user?.role === 'officer' ? (
                     <>
@@ -177,18 +189,9 @@ export default function Navbar() {
           ) : (
             !isLogin && (
               <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowDemoModal(true)}
-                  className="hidden sm:inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 py-1.5 px-2.5 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-                  title="1-Click Demo Logins"
-                >
-                  <Sparkles size={13} className="text-amber-600" />
-                  <span>Demo Logins</span>
-                </button>
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-1.5 border border-[#007A78] text-[#007A78] hover:bg-[#007A78] hover:text-white px-3 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs rounded-xs"
+                  className="inline-flex items-center gap-1.5 border border-[#007A78] text-[#007A78] hover:bg-[#007A78] hover:text-white px-3.5 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs rounded-xs"
                 >
                   <KeyRound size={13} />
                   <span className="hidden xs:inline">{t('auth', 'tabSignIn').split(' ')[0]}</span>
@@ -228,9 +231,13 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Drawer Navigation */}
       {open && (
-        <div className="lg:hidden bg-white border-b border-[#CCE4EC] px-6 py-4 flex flex-col gap-3 shadow-lg">
+        <div className={`lg:hidden border-t px-4 py-5 flex flex-col gap-3 text-xs ${
+          darkGlass
+            ? 'bg-[#031520]/95 border-white/10 backdrop-blur-2xl text-white'
+            : 'bg-white border-[#CCE4EC] text-[#2D4454]'
+        } shadow-lg`}>
           <div className="flex items-center justify-between pb-2 border-b border-[#E0EEF3]">
             <span className="text-xs text-[#5C7788] font-semibold">
               ISRO SIH26176 • Sagar Roads Station
@@ -274,19 +281,6 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Demo Personas Quick Launch */}
-          <button
-            type="button"
-            onClick={() => {
-              setShowDemoModal(true)
-              setOpen(false)
-            }}
-            className="w-full flex items-center justify-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 py-2 px-3 rounded text-xs font-bold uppercase tracking-wider shadow-2xs hover:bg-amber-100 transition-colors cursor-pointer"
-          >
-            <Sparkles size={14} className="text-amber-600" />
-            <span>Switch / Test Demo Personas</span>
-          </button>
-
           {navLinks.map((link) => (
             <a
               key={link.label}
@@ -307,12 +301,6 @@ export default function Navbar() {
           </Link>
         </div>
       )}
-
-      {/* Global 1-Click Demo Persona Switcher Modal */}
-      <DemoSwitcherModal
-        isOpen={showDemoModal}
-        onClose={() => setShowDemoModal(false)}
-      />
     </header>
     </>
   )

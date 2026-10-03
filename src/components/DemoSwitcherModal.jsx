@@ -10,7 +10,8 @@ import {
   Waves,
   Radio,
   Check,
-  ArrowRight
+  ArrowRight,
+  Compass
 } from 'lucide-react'
 import { DEMO_USERS } from '../lib/demoUsers.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -41,6 +42,7 @@ export default function DemoSwitcherModal({ isOpen, onClose }) {
   }
 
   const getRoleIcon = (role, officerType) => {
+    if (role === 'public') return <Compass size={18} className="text-sky-600" />
     if (role === 'skipper') return <Ship size={18} className="text-emerald-700" />
     if (role === 'researcher') return <Cpu size={18} className="text-amber-700" />
     if (role === 'port_crew') return <Anchor size={18} className="text-slate-700" />

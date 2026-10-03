@@ -188,19 +188,34 @@ function runHistoryAgent(rawZone, dateStr) {
 // -----------------------------------------------------------------------------
 // 4. Sustainability Agent — fishing-ban calendar + protected-area proximity
 // -----------------------------------------------------------------------------
-// India's east-coast trawling ban runs ~15 April - 14 June each year
-// (exact dates vary slightly by state notification; illustrative here).
-function isInBanWindow(date) {
+// India's seasonal uniform fishing bans notified by Ministry of Fisheries:
+// - East Coast & A&N: 15 April – 14 June (61 days)
+// - West Coast & Lakshadweep: 01 June – 31 July (61 days)
+function isInBanWindow(date, zone = null) {
   const year = date.getFullYear()
+  const isWestCoast = zone?.regionId === 'arabian-sea' || zone?.regionId === 'lakshadweep'
+
+  if (isWestCoast) {
+    const banStart = new Date(`${year}-06-01`)
+    const banEnd = new Date(`${year}-07-31`)
+    return {
+      inBan: date >= banStart && date <= banEnd,
+      label: 'West-coast seasonal fishing ban (01 Jun – 31 Jul)'
+    }
+  }
+
   const banStart = new Date(`${year}-04-15`)
   const banEnd = new Date(`${year}-06-14`)
-  return date >= banStart && date <= banEnd
+  return {
+    inBan: date >= banStart && date <= banEnd,
+    label: 'East-coast seasonal fishing ban (15 Apr – 14 Jun)'
+  }
 }
 
 function runSustainabilityAgent(rawZone, dateStr) {
   const zone = resolveZone(rawZone)
   const date = new Date(dateStr)
-  const inBan = isInBanWindow(date)
+  const { inBan, label: banLabel } = isInBanWindow(date, zone)
   const nearProtected = Boolean(zone.nearProtectedArea ?? zone.near_protected_area)
 
   let score
@@ -208,7 +223,7 @@ function runSustainabilityAgent(rawZone, dateStr) {
 
   if (inBan) {
     score = 0
-    summary = `${date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })} falls inside the East-coast seasonal fishing ban (15 Apr – 14 Jun) — this zone is closed regardless of other conditions.`
+    summary = `${date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })} falls inside the ${banLabel} — this zone is closed regardless of other conditions.`
   } else if (nearProtected) {
     score = 40
     summary = `Outside the ban window, but this zone sits near a protected breeding/sanctuary area — proceed with care and stay clear of marked boundaries.`

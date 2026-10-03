@@ -89,7 +89,7 @@ const FAQ_ITEMS = [
   }
 ]
 
-export default function FAQ() {
+export default function FAQ({ darkGlass = false }) {
   const [openId, setOpenId] = useState('real-data')
 
   const toggleItem = (id) => {
@@ -97,19 +97,31 @@ export default function FAQ() {
   }
 
   return (
-    <section id="faq" className="py-16 px-4 sm:px-6 bg-[#EAF4F8] border-b border-[#CCE4EC]">
+    <section id="faq" className={`py-16 px-4 sm:px-6 transition-colors ${
+      darkGlass
+        ? 'bg-[#031520] border-b border-white/10 text-slate-300'
+        : 'bg-[#EAF4F8] border-b border-[#CCE4EC]'
+    }`}>
       <div className="max-w-4xl mx-auto">
         
         {/* Section Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-[#E2F0F5] border border-[#BCDCE6] text-[#007A78] text-xs font-mono font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full mb-3 shadow-2xs">
-            <HelpCircle size={14} className="text-[#007A78]" />
+          <div className={`inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full mb-3 shadow-2xs ${
+            darkGlass
+              ? 'bg-teal-500/10 border border-teal-500/30 text-teal-300'
+              : 'bg-[#E2F0F5] border border-[#BCDCE6] text-[#007A78]'
+          }`}>
+            <HelpCircle size={14} className={darkGlass ? 'text-teal-400' : 'text-[#007A78]'} />
             <span>OPERATIONAL TRANSPARENCY &amp; PROTOCOLS</span>
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0A1B27] tracking-tight mb-3">
+          <h2 className={`font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-3 ${
+            darkGlass ? 'text-white' : 'text-[#0A1B27]'
+          }`}>
             Frequently Answered Inquiries
           </h2>
-          <p className="text-xs sm:text-sm text-[#5C7788] max-w-xl mx-auto leading-relaxed">
+          <p className={`text-xs sm:text-sm max-w-xl mx-auto leading-relaxed ${
+            darkGlass ? 'text-slate-300' : 'text-[#5C7788]'
+          }`}>
             Direct, plain-language answers regarding telemetry authenticity, ISRO problem statement scope, safety veto algorithms, and prototype constraints.
           </p>
         </div>
@@ -124,10 +136,14 @@ export default function FAQ() {
             return (
               <div
                 key={item.id}
-                className={`bg-white border rounded-xl transition-all duration-200 overflow-hidden shadow-xs ${
-                  isOpen
-                    ? 'border-[#007A78] ring-1 ring-[#007A78]/20'
-                    : 'border-[#CCE4EC] hover:border-[#BCDCE6]'
+                className={`rounded-xl transition-all duration-200 overflow-hidden shadow-xs ${
+                  darkGlass
+                    ? isOpen
+                      ? 'bg-[#071927]/90 border border-teal-500/50 ring-1 ring-teal-500/30 backdrop-blur-xl'
+                      : 'bg-[#071927]/60 border border-white/10 hover:border-white/20 backdrop-blur-xl'
+                    : isOpen
+                    ? 'bg-white border border-[#007A78] ring-1 ring-[#007A78]/20'
+                    : 'bg-white border border-[#CCE4EC] hover:border-[#BCDCE6]'
                 }`}
               >
                 <h3>
@@ -140,19 +156,27 @@ export default function FAQ() {
                     className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-[#007A78] focus-visible:outline-none"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs font-bold text-[#007A78] w-5 shrink-0">
+                      <span className={`font-mono text-xs font-bold w-5 shrink-0 ${darkGlass ? 'text-teal-400' : 'text-[#007A78]'}`}>
                         0{index + 1}.
                       </span>
-                      <span className="font-serif text-base sm:text-lg font-bold text-[#0A1B27]">
+                      <span className={`font-serif text-base sm:text-lg font-bold ${darkGlass ? 'text-white' : 'text-[#0A1B27]'}`}>
                         {item.question}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2.5 shrink-0">
-                      <span className="hidden sm:inline-block font-mono text-[10px] font-bold uppercase tracking-wider bg-[#E2F0F5] text-[#007A78] px-2 py-0.5 rounded border border-[#BCDCE6]">
+                      <span className={`hidden sm:inline-block font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                        darkGlass
+                          ? 'bg-teal-500/20 text-teal-300 border-teal-500/30'
+                          : 'bg-[#E2F0F5] text-[#007A78] border-[#BCDCE6]'
+                      }`}>
                         {item.badge}
                       </span>
-                      <div className={`p-1 rounded transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#007A78]' : 'text-[#5C7788]'}`}>
+                      <div className={`p-1 rounded transition-transform duration-200 ${
+                        isOpen
+                          ? darkGlass ? 'rotate-180 text-teal-400' : 'rotate-180 text-[#007A78]'
+                          : darkGlass ? 'text-slate-400' : 'text-[#5C7788]'
+                      }`}>
                         <ChevronDown size={18} />
                       </div>
                     </div>
@@ -164,7 +188,9 @@ export default function FAQ() {
                     id={panelId}
                     role="region"
                     aria-labelledby={buttonId}
-                    className="px-4 sm:px-5 pb-5 pt-1 border-t border-[#E0EEF3] animate-in fade-in duration-150"
+                    className={`px-4 sm:px-5 pb-5 pt-1 border-t animate-in fade-in duration-150 ${
+                      darkGlass ? 'border-white/10 text-slate-300' : 'border-[#E0EEF3] text-[#2D4454]'
+                    }`}
                   >
                     {item.answer}
                   </div>
@@ -175,9 +201,11 @@ export default function FAQ() {
         </div>
 
         {/* Footnote Link to Methodology */}
-        <div className="mt-8 text-center text-xs text-[#5C7788]">
+        <div className={`mt-8 text-center text-xs ${darkGlass ? 'text-slate-400' : 'text-[#5C7788]'}`}>
           <span>Need deeper oceanographic equations? </span>
-          <Link to="/methodology" className="text-[#007A78] font-bold underline hover:text-[#006361] inline-flex items-center gap-1">
+          <Link to="/methodology" className={`font-bold underline inline-flex items-center gap-1 ${
+            darkGlass ? 'text-teal-400 hover:text-teal-300' : 'text-[#007A78] hover:text-[#006361]'
+          }`}>
             <span>Explore the complete 4-Agent mathematical methodology</span>
             <ExternalLink size={12} />
           </Link>

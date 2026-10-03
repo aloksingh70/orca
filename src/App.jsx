@@ -4,7 +4,9 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import Landing from './pages/index.jsx'
 import Advisory from './pages/advisory.jsx'
 import Login from './pages/login.jsx'
+import Regions from './pages/regions.jsx'
 import Methodology from './pages/methodology.jsx'
+import About from './pages/about.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 function AppRoutes() {
@@ -28,6 +30,10 @@ function AppRoutes() {
       <Route path="/overview" element={<Landing />} />
       <Route path="/landing" element={<Landing />} />
 
+      {/* Coastal Sea Region Selection (Step 1) */}
+      <Route path="/regions" element={<Regions />} />
+      <Route path="/select-region" element={<Regions />} />
+
       {/* Advisory Console (Guest / Demo / Authenticated) */}
       <Route path="/advisory" element={<Advisory />} />
 
@@ -47,6 +53,9 @@ function AppRoutes() {
 
       {/* Scientific Methodology */}
       <Route path="/methodology" element={<Methodology />} />
+
+      {/* About / Impact for Lay Audience & Curious Visitors */}
+      <Route path="/about" element={<About />} />
 
       {/* Branded 404 Catch-All */}
       <Route path="*" element={<NotFound />} />

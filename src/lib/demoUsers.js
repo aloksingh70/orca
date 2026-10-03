@@ -143,5 +143,31 @@ export const DEMO_USERS = [
       'Verified quayside catch landing ledger entry',
       'Returning mechanized trawler ETA and draft clearance'
     ]
+  },
+  {
+    id: 'visitor',
+    role: 'public',
+    officerType: null,
+    email: 'visitor@orca.in',
+    password: 'orca123',
+    name: 'Aarav Mehta',
+    title: 'Curious Visitor / General Public',
+    cadre: 'Ocean Enthusiast · Public Explainer Mode',
+    vesselOrStation: 'Visitor & Education Deck · Bay of Bengal',
+    badgeOrReg: 'VISITOR-GUEST',
+    badgeText: 'VISITOR',
+    accentColor: 'sky',
+    badgeClass: 'bg-sky-100 text-sky-800 border-sky-300',
+    borderHover: 'hover:border-sky-500',
+    btnClass: 'bg-sky-600 hover:bg-sky-700 text-white',
+    deckName: 'Interactive Explainer & Simulation Deck',
+    keyCapabilities: [
+      'Guided walkthrough of all 4 AI agents & safety veto',
+      'Try-It-Yourself annual season & ban slider',
+      'Jargon-free translations alongside real satellite metrics',
+      'Interactive zone prediction challenge',
+      'Zero-friction entry without maritime jargon or setup'
+    ]
   }
 ]
+

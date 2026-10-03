@@ -37,6 +37,8 @@ class Zone(Base):
     id = Column(String(50), primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     sector_code = Column(String(20), default="WB")
+    port_id = Column(String(50), default="kolkata-haldia", nullable=True)
+    region_id = Column(String(50), default="bay-of-bengal", nullable=True)
     distance_offshore = Column(String(50), nullable=False)
     sounding_depth = Column(Integer, default=15)
     seabed = Column(String(100), default="Silt & mud substrate")

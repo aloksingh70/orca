@@ -142,6 +142,14 @@ SECTORS_DATA = [
     }
 ]
 
+try:
+    from .zones_data import ALL_ZONES
+except ImportError:
+    try:
+        from zones_data import ALL_ZONES
+    except ImportError:
+        ALL_ZONES = None
+
 def seed_database(db: Session = None):
     init_db()
     close_db = False
@@ -150,34 +158,41 @@ def seed_database(db: Session = None):
         close_db = True
 
     try:
-        # 1. Seed Zones if empty
-        if db.query(Zone).count() == 0:
-            for s in SECTORS_DATA:
+        # 1. Seed or synchronize Zones across all Major Ports
+        zones_source = ALL_ZONES if ALL_ZONES else SECTORS_DATA
+        for s in zones_source:
+            existing = db.query(Zone).filter(Zone.id == s["id"]).first()
+            if not existing:
                 zone = Zone(
                     id=s["id"],
                     name=s["name"],
-                    sector_code=s["sector_code"],
-                    distance_offshore=s["distance_offshore"],
-                    sounding_depth=s["sounding_depth"],
-                    seabed=s["seabed"],
-                    coordinates=s["coordinates"],
+                    sector_code=s.get("sector_code", "WB"),
+                    port_id=s.get("port_id", "kolkata-haldia"),
+                    region_id=s.get("region_id", "bay-of-bengal"),
+                    distance_offshore=s.get("distance_offshore", "10 km"),
+                    sounding_depth=s.get("sounding_depth", 15),
+                    seabed=s.get("seabed", "Sand & silt substrate"),
+                    coordinates=s.get("coordinates", "21°30'N, 88°00'E"),
                     lat=s.get("lat"),
                     lng=s.get("lng"),
-                    coastal_district=s["coastal_district"],
-                    harbor_name=s["harbor_name"],
-                    fleet_type=s["fleet_type"],
-                    base_sst=s["base_sst"],
-                    base_chlorophyll=s["base_chlorophyll"],
-                    base_wind=s["base_wind"],
-                    base_wave=s["base_wave"],
-                    seasonal_catch_index=s["seasonal_catch_index"],
-                    peak_catch=s["peak_catch"],
-                    near_protected_area=s["near_protected_area"],
-                    description=s.get("description")
+                    coastal_district=s.get("coastal_district", "Coastal District"),
+                    harbor_name=s.get("harbor_name", "Harbor Base"),
+                    fleet_type=s.get("fleet_type", "Mechanized crafts"),
+                    base_sst=s.get("base_sst", 28.5),
+                    base_chlorophyll=s.get("base_chlorophyll", 1.5),
+                    base_wind=s.get("base_wind", 18.0),
+                    base_wave=s.get("base_wave", 1.1),
+                    seasonal_catch_index=s.get("seasonal_catch_index", [300] * 12),
+                    peak_catch=s.get("peak_catch", 500),
+                    near_protected_area=s.get("near_protected_area", False),
+                    description=s.get("description", "")
                 )
                 db.add(zone)
-            db.commit()
-            print(f"[Seed] Successfully seeded {len(SECTORS_DATA)} coastal zones.")
+            else:
+                existing.port_id = s.get("port_id", existing.port_id or "kolkata-haldia")
+                existing.region_id = s.get("region_id", existing.region_id or "bay-of-bengal")
+        db.commit()
+        print(f"[Seed] Successfully seeded/synchronized {len(zones_source)} coastal zones across Pan-India ports.")
 
         # 2. Seed default users for quick evaluation
         demo_users = [

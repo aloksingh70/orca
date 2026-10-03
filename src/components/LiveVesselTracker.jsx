@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -57,12 +57,12 @@ function VesselMapFlyTo({ target }) {
   return null
 }
 
-export default function LiveVesselTracker({ onClose, onSelectSector }) {
+export default function LiveVesselTracker({ onClose, onSelectSector, regionId = 'bay-of-bengal', portId = 'kolkata-haldia', zonesList = [] }) {
   const [vessels, setVessels] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedVessel, setSelectedVessel] = useState(null)
-  const [viewMode, setViewMode] = useState('radar') // 'radar' | 'internet_ais' | 'list'
+  const [viewMode, setViewMode] = useState('internet_ais') // 'internet_ais' | 'radar' | 'list'
   const [searchQuery, setSearchQuery] = useState('')
   const [lastRefreshed, setLastRefreshed] = useState(new Date())
   const [autoRefresh, setAutoRefresh] = useState(true)
@@ -70,7 +70,7 @@ export default function LiveVesselTracker({ onClose, onSelectSector }) {
   const loadVessels = async () => {
     setLoading(true)
     try {
-      const data = await fetchLiveVessels(selectedCategory)
+      const data = await fetchLiveVessels(selectedCategory, regionId, portId)
       setVessels(data)
       if (data.length > 0 && !selectedVessel) {
         setSelectedVessel(data[0])
@@ -83,9 +83,32 @@ export default function LiveVesselTracker({ onClose, onSelectSector }) {
     }
   }
 
+  const displaySectors = useMemo(() => {
+    if (zonesList && zonesList.length > 0) {
+      return zonesList.map((z, idx) => ({
+        id: z.id,
+        code: z.sectorCode || `SEC-0${idx + 1}`,
+        name: z.name,
+        lat: z.lat,
+        lng: z.lng
+      }))
+    }
+    return RADAR_SECTORS
+  }, [zonesList])
+
+  const mapCenter = useMemo(() => {
+    if (displaySectors.length > 0) {
+      return [
+        displaySectors.reduce((acc, s) => acc + s.lat, 0) / displaySectors.length,
+        displaySectors.reduce((acc, s) => acc + s.lng, 0) / displaySectors.length
+      ]
+    }
+    return [21.45, 88.05]
+  }, [displaySectors])
+
   useEffect(() => {
     loadVessels()
-  }, [selectedCategory])
+  }, [selectedCategory, regionId, portId])
 
   // Periodic live refresh every 15 seconds
   useEffect(() => {
@@ -592,7 +615,8 @@ export default function LiveVesselTracker({ onClose, onSelectSector }) {
             {/* React Leaflet Map Container */}
             <div className="relative w-full h-[500px] bg-slate-950 rounded-lg overflow-hidden border border-slate-700">
               <MapContainer
-                center={[21.45, 88.05]}
+                key={`ais-map-${regionId}-${portId}`}
+                center={mapCenter}
                 zoom={9}
                 scrollWheelZoom={true}
                 className="w-full h-full"
@@ -606,20 +630,22 @@ export default function LiveVesselTracker({ onClose, onSelectSector }) {
                   maxZoom={18}
                 />
 
-                {/* IMBL Boundary */}
-                <Polyline
-                  positions={IMBL_COORDS}
-                  pathOptions={{ color: '#DC2626', weight: 2.5, dashArray: '6, 6' }}
-                >
-                  <Tooltip sticky>
-                    <div className="font-mono text-xs font-bold text-red-600">
-                      INDIA — BANGLADESH IMBL (Maritime Border)
-                    </div>
-                  </Tooltip>
-                </Polyline>
+                {/* IMBL Boundary (Active in Bay of Bengal) */}
+                {regionId === 'bay-of-bengal' && (
+                  <Polyline
+                    positions={IMBL_COORDS}
+                    pathOptions={{ color: '#DC2626', weight: 2.5, dashArray: '6, 6' }}
+                  >
+                    <Tooltip sticky>
+                      <div className="font-mono text-xs font-bold text-red-600">
+                        INDIA — BANGLADESH IMBL (Maritime Border)
+                      </div>
+                    </Tooltip>
+                  </Polyline>
+                )}
 
                 {/* Coastal Sectors */}
-                {RADAR_SECTORS.map((sec) => (
+                {displaySectors.map((sec) => (
                   <Marker
                     key={`ais-sec-${sec.id}`}
                     position={[sec.lat, sec.lng]}

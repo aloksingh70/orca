@@ -27,6 +27,8 @@ try:
     from .agents import evaluate_zone, scan_coastline, fetch_bulk_live_data, compute_official_match_verification
     from .seed_data import seed_database
     from .vessels import get_live_vessels
+    from .regions import REGIONS, get_region_by_id
+    from .ports import PORTS, get_ports_by_region, get_port_by_id
 except ImportError:
     from database import engine, Base, get_db, init_db
     from models import User, Zone, ScanHistory, UserSavedZone, CatchLogEntry, LandingLogEntry, ScanLog
@@ -43,6 +45,8 @@ except ImportError:
     from agents import evaluate_zone, scan_coastline, fetch_bulk_live_data, compute_official_match_verification
     from seed_data import seed_database
     from vessels import get_live_vessels
+    from regions import REGIONS, get_region_by_id
+    from ports import PORTS, get_ports_by_region, get_port_by_id
 
 # Create tables immediately on module load to guarantee schema readiness
 init_db()
@@ -354,8 +358,17 @@ def get_current_user_profile(current_user: User = Depends(get_current_user)):
 # Coastal Zones & Bathymetry
 # -----------------------------------------------------------------------------
 @app.get("/api/zones", response_model=List[ZoneOut], tags=["Zones"])
-def list_zones(db: Session = Depends(get_db)):
-    return db.query(Zone).all()
+def list_zones(
+    region: Optional[str] = None,
+    port: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Zone)
+    if region:
+        query = query.filter(Zone.region_id == region)
+    if port:
+        query = query.filter(Zone.port_id == port)
+    return query.all()
 
 @app.get("/api/zones/{zone_id}", response_model=ZoneOut, tags=["Zones"])
 def get_zone_detail(zone_id: str, db: Session = Depends(get_db)):
@@ -363,6 +376,35 @@ def get_zone_detail(zone_id: str, db: Session = Depends(get_db)):
     if not zone:
         raise HTTPException(status_code=404, detail="Coastal zone sector not found")
     return zone
+
+# -----------------------------------------------------------------------------
+# Sea Regions & Major Ports API
+# -----------------------------------------------------------------------------
+@app.get("/api/regions", tags=["Regions"])
+def list_regions():
+    """List India's 4 major sea regions with statutory fishing ban schedules."""
+    return REGIONS
+
+@app.get("/api/regions/{region_id}", tags=["Regions"])
+def get_region_detail(region_id: str):
+    r = get_region_by_id(region_id)
+    if not r:
+        raise HTTPException(status_code=404, detail="Sea region not found")
+    return r
+
+@app.get("/api/ports", tags=["Ports"])
+def list_ports(region: Optional[str] = None):
+    """List India's 12 Major Ports under MoPSW + Island Authorities."""
+    if region:
+        return get_ports_by_region(region)
+    return PORTS
+
+@app.get("/api/ports/{port_id}", tags=["Ports"])
+def get_port_detail(port_id: str):
+    p = get_port_by_id(port_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Major port not found")
+    return p
 
 # -----------------------------------------------------------------------------
 # Multi-Agent Advisory Engine
@@ -375,14 +417,23 @@ def scan_coastal_advisory(
 ):
     scan_date = request.date or datetime.utcnow().strftime("%Y-%m-%d")
     
-    # Query zones
+    # Query zones with optional port or region filter
     query = db.query(Zone)
+    port_filter = request.port_id or request.port
+    region_filter = request.region_id or request.region
     if request.zone_ids:
         query = query.filter(Zone.id.in_(request.zone_ids))
+    elif port_filter:
+        query = query.filter(Zone.port_id == port_filter)
+    elif region_filter:
+        query = query.filter(Zone.region_id == region_filter)
     zones = query.all()
 
     if not zones:
-        raise HTTPException(status_code=404, detail="No coastal zones available for sounding")
+        # Fallback to all available zones if specific filter yields none
+        zones = db.query(Zone).all()
+        if not zones:
+            raise HTTPException(status_code=404, detail="No coastal zones available for sounding")
 
     # Run multi-agent pipeline
     scanned_results = scan_coastline(zones, scan_date)
@@ -686,11 +737,14 @@ def get_landing_logs(
 # Live Maritime AIS Vessel Tracking (Bay of Bengal & Sandheads Corridor)
 # -----------------------------------------------------------------------------
 @app.get("/api/vessels/live", response_model=List[VesselOut], tags=["Maritime Surveillance"])
-def get_live_bay_of_bengal_vessels(category: Optional[str] = None):
+def get_live_bay_of_bengal_vessels(
+    category: Optional[str] = None,
+    region_id: Optional[str] = None,
+    port_id: Optional[str] = None
+):
     """
-    Live Automatic Identification System (AIS) tracking feed for the Bay of Bengal & Sandheads fairway.
-    Monitors Cargo ships, Passenger Cruise vessels & pilgrim ferries, Tankers, Fishing craft, and Coast Guard patrols.
-    Calculates real-time proximity to coastal sectors (WB-01 to WB-06) and flags collision hazards.
+    Live Automatic Identification System (AIS) tracking feed across Indian coastal waters.
+    Monitors Cargo ships, Passenger Cruises, Tankers, Fishing craft, and Coast Guard patrols.
     """
     return get_live_vessels(category=category)
 

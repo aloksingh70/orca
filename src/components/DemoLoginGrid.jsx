@@ -13,7 +13,8 @@ import {
   Copy,
   CheckCircle2,
   Radio,
-  FileText
+  FileText,
+  Compass
 } from 'lucide-react'
 import { DEMO_USERS } from '../lib/demoUsers.js'
 
@@ -28,6 +29,7 @@ export default function DemoLoginGrid({ onInstantLogin, onFillCredentials, isAut
   }
 
   const getRoleIcon = (role, officerType) => {
+    if (role === 'public') return <Compass size={20} className="text-sky-600" />
     if (role === 'skipper') return <Ship size={20} className="text-emerald-700" />
     if (role === 'researcher') return <Cpu size={20} className="text-amber-700" />
     if (role === 'port_crew') return <Anchor size={20} className="text-slate-700" />
@@ -66,7 +68,9 @@ export default function DemoLoginGrid({ onInstantLogin, onFillCredentials, isAut
             <div
               key={user.id}
               className={`bg-white border-2 rounded-xl p-4 transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md ${
-                user.id === 'skipper'
+                user.id === 'visitor'
+                  ? 'border-sky-200 hover:border-sky-500'
+                  : user.id === 'skipper'
                   ? 'border-emerald-200 hover:border-emerald-500'
                   : user.id === 'coast_guard'
                   ? 'border-orange-200 hover:border-orange-500'
