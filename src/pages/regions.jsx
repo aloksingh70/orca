@@ -50,14 +50,14 @@ export default function Regions() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EAF4F8] text-[#0A1B27] font-sans flex flex-col">
+    <div className="min-h-screen bg-[#EAF4F8] text-[#0A1B27] font-sans flex flex-col w-full max-w-full overflow-x-hidden">
       <PageMeta
         title="Select Coastal Sea Region — ORCA Pan-India Maritime Intelligence | SIH26176"
         description="Choose among India's 4 major coastal sea regions (Bay of Bengal, Arabian Sea, Andaman & Nicobar, Lakshadweep) to configure multi-agent oceanographic telemetry."
       />
       <Navbar />
 
-      <main id="main-content" className="flex-1 pt-28 pb-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
+      <main id="main-content" className="flex-1 pt-28 pb-16 px-4 sm:px-6 max-w-7xl mx-auto w-full max-w-full min-w-0 overflow-x-hidden">
         {/* Navigation Breadcrumb / Back */}
         <div className="mb-6 flex items-center justify-between">
           <Link

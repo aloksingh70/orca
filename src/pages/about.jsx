@@ -23,14 +23,14 @@ import PageMeta from '../components/PageMeta.jsx'
 
 export default function About() {
   return (
-    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454]">
+    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454] w-full max-w-full overflow-x-hidden">
       <PageMeta
         title="About ORCA — Human Stakes, Marine Science & Impact | SIH26176"
         description="Learn why ORCA exists: a plain-language explainer on coastal fishing realities, satellite oceanography, ecological breeding bans, and explainable multi-agent AI."
       />
       <Navbar />
 
-      <main id="main-content" tabIndex={-1} className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 pt-24 pb-20 outline-none space-y-12">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-5xl mx-auto w-full max-w-full min-w-0 px-4 sm:px-6 pt-24 pb-20 outline-none space-y-12 overflow-x-hidden">
         
         {/* =================================================================== */}
         {/* 1. HERO HEADER                                                     */}

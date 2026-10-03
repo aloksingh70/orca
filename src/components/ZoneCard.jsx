@@ -164,9 +164,9 @@ export default function ZoneCard({
       } ${isVetoed ? 'opacity-95' : ''}`}
     >
       {/* Top Header: Code, Sector Name, Distance, Verdict Badge */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1">
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-600 tabular-nums">
+      <div className="flex items-start justify-between gap-2 w-full min-w-0">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600 tabular-nums">
             {onToggleFavorite && (
               <button
                 type="button"

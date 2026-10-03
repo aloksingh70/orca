@@ -85,7 +85,7 @@ export default function DieselEconomicsCalculator({ selectedZone = null, compact
   }
 
   return (
-    <div className="bg-white border border-[#CCE4EC] rounded-xl p-5 sm:p-6 shadow-sm">
+    <div className="bg-white border border-[#CCE4EC] rounded-xl p-4 sm:p-6 shadow-sm w-full max-w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
         <div>

@@ -79,11 +79,11 @@ export default function AnimatedShowcase() {
           </p>
 
           {/* Interactive Dual-Mode Switcher */}
-          <div className="inline-flex p-1.5 bg-white border border-[#CCE4EC] rounded-xl mt-6 shadow-xs">
+          <div className="flex flex-col sm:inline-flex sm:flex-row p-1.5 bg-white border border-[#CCE4EC] rounded-xl mt-6 shadow-xs max-w-full w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setActiveTab('what')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 activeTab === 'what'
                   ? 'bg-[#007A78] text-white shadow-xs'
                   : 'text-[#5C7788] hover:text-[#0A1B27]'
@@ -95,7 +95,7 @@ export default function AnimatedShowcase() {
             <button
               type="button"
               onClick={() => setActiveTab('how')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 activeTab === 'how'
                   ? 'bg-[#007A78] text-white shadow-xs'
                   : 'text-[#5C7788] hover:text-[#0A1B27]'
@@ -300,11 +300,11 @@ export default function AnimatedShowcase() {
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                   <select
                     value={selectedSector}
                     onChange={(e) => setSelectedSector(e.target.value)}
-                    className="bg-[#F8FCFD] border border-[#CCE4EC] text-[#0A1B27] text-xs px-3 py-2 rounded-lg font-medium outline-none focus:border-[#007A78]"
+                    className="bg-[#F8FCFD] border border-[#CCE4EC] text-[#0A1B27] text-xs px-3 py-2 rounded-lg font-medium outline-none focus:border-[#007A78] w-full sm:w-auto"
                   >
                     {sectors.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -317,7 +317,7 @@ export default function AnimatedShowcase() {
                     type="button"
                     disabled={simulating}
                     onClick={triggerSimulation}
-                    className="flex items-center gap-2 bg-[#007A78] hover:bg-[#006361] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-all shadow-xs cursor-pointer"
+                    className="flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-all shadow-xs cursor-pointer w-full sm:w-auto"
                   >
                     {simulating ? (
                       <>

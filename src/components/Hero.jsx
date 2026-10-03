@@ -13,12 +13,12 @@ export default function Hero() {
   })
 
   return (
-    <section id="home" className="relative w-full pt-28 pb-16 px-4 sm:px-6 bg-[#EAF4F8] border-b border-[#CCE4EC]">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+    <section id="home" className="relative w-full max-w-full overflow-x-hidden pt-28 pb-16 px-4 sm:px-6 bg-[#EAF4F8] border-b border-[#CCE4EC]">
+      <div className="max-w-7xl mx-auto w-full min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start w-full min-w-0">
           
           {/* Left Column (5 cols): Authoritative Hydrographic Dispatch */}
-          <div className="lg:col-span-5 flex flex-col items-start pt-2">
+          <div className="w-full min-w-0 lg:col-span-5 flex flex-col items-start pt-2">
             
             {/* Hydrographics Eyebrow Tag */}
             <div className="flex items-center gap-2 mb-3 text-xs">
@@ -32,7 +32,7 @@ export default function Hero() {
             </div>
 
             {/* Main Serif Headline */}
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[42px] font-bold text-[#0A1B27] leading-[1.14] mb-4">
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-[40px] font-bold text-[#0A1B27] leading-[1.18] mb-4 break-words">
               {t('hero', 'title')}
             </h1>
 
@@ -45,14 +45,14 @@ export default function Hero() {
             <div className="flex flex-wrap items-center gap-3 mb-8 w-full sm:w-auto">
               <Link
                 to="/advisory"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98] rounded-xs"
               >
                 <Compass size={14} className="text-[#007A78]" />
                 <span>{t('hero', 'openAdvisory')}</span>
               </Link>
               <Link
                 to="/regions"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-5 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-5 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors rounded-xs"
               >
                 <Ship size={14} className="text-[#007A78]" />
                 <span>Select Sea Basin</span>
@@ -60,7 +60,7 @@ export default function Hero() {
             </div>
 
             {/* Open Station Facts separated by subtle rules */}
-            <div className="w-full flex items-center gap-6 pt-5 border-t border-[#CCE4EC] text-xs">
+            <div className="w-full flex flex-wrap sm:flex-nowrap items-center gap-4 sm:gap-6 pt-5 border-t border-[#CCE4EC] text-xs">
               <div>
                 <span className="block text-[10px] text-[#5C7788] uppercase tracking-wider font-semibold">
                   {t('hero', 'extentLabel')}
@@ -72,7 +72,7 @@ export default function Hero() {
                   {t('hero', 'extentSub')}
                 </span>
               </div>
-              <div className="h-9 w-px bg-[#CCE4EC]" />
+              <div className="h-9 w-px bg-[#CCE4EC] hidden sm:block" />
               <div>
                 <span className="block text-[10px] text-[#5C7788] uppercase tracking-wider font-semibold">
                   {t('hero', 'obsLabel')}
@@ -89,8 +89,8 @@ export default function Hero() {
           </div>
 
           {/* Right Column (7 cols): Hydrographic Chart IN-351 Frame */}
-          <div className="lg:col-span-7 flex flex-col">
-            <div className="bg-white border border-[#CCE4EC] shadow-sm p-4 sm:p-5">
+          <div className="w-full min-w-0 lg:col-span-7 flex flex-col">
+            <div className="bg-white border border-[#CCE4EC] shadow-sm p-3.5 sm:p-5 w-full min-w-0 overflow-hidden rounded-xl">
               
               {/* Chart Masthead */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-[#E0EEF3] text-xs">

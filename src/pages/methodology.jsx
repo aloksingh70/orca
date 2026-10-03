@@ -20,14 +20,14 @@ import PageMeta from '../components/PageMeta.jsx'
 
 export default function Methodology() {
   return (
-    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454]">
+    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454] w-full max-w-full overflow-x-hidden">
       <PageMeta
         title="Science & Methodology — ORCA"
         description="Four-agent consensus architecture, oceanographic sensor baselines, and mathematical verification algorithms powering ORCA."
       />
       <Navbar />
 
-      <main id="main-content" tabIndex={-1} className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 pt-24 pb-20 outline-none">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-6xl mx-auto w-full max-w-full min-w-0 px-4 sm:px-6 pt-24 pb-20 outline-none overflow-x-hidden">
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
           <Link

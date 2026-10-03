@@ -42,9 +42,12 @@ export default function LanguageSelector({ compact = false }) {
         }`}
         title="Select Webpage Language / भाषा चुनें / ভাষা নির্বাচন"
       >
-        <Languages size={15} className="text-[#007A78] shrink-0" />
-        <span className="font-sans tracking-wide">
+        <Languages size={14} className="text-[#007A78] shrink-0" />
+        <span className="font-sans tracking-wide hidden sm:inline">
           {compact ? currentLang.short : currentLang.native}
+        </span>
+        <span className="font-sans tracking-wide sm:hidden text-[11px]">
+          {currentLang.short}
         </span>
         <ChevronDown
           size={12}

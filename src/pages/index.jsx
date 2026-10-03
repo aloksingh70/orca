@@ -86,7 +86,7 @@ export default function Landing() {
     : zones.filter((z) => z.regionId === activeRegionFilter)
 
   return (
-    <div className="min-h-screen bg-[#EAF4F8] text-[#2D4454] font-sans selection:bg-[#007A78] selection:text-white">
+    <div className="min-h-screen bg-[#EAF4F8] text-[#2D4454] font-sans selection:bg-[#007A78] selection:text-white w-full max-w-full overflow-x-hidden">
       <PageMeta
         title="ORCA — Marine Fishing Zone Advisory | SIH26176"
         description="Operational marine harvesting advisory and explainable AI safety intelligence for coastal mariners across India's maritime corridors."
@@ -94,7 +94,7 @@ export default function Landing() {
 
       <Navbar />
 
-      <main id="main-content" tabIndex={-1} className="outline-none">
+      <main id="main-content" tabIndex={-1} className="outline-none w-full max-w-full overflow-x-hidden">
         
         {/* SECTION 1: HYDROGRAPHIC HERO SECTION */}
         <Hero />

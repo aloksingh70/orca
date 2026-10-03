@@ -504,14 +504,14 @@ export default function Advisory() {
   }
 
   return (
-    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454]">
+    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454] w-full max-w-full overflow-x-hidden">
       <PageMeta
         title="Advisory Console — ORCA"
         description="Real-time marine harvesting advisory console, live coastline scan, hydrographic telemetry, and multi-agent explainable reasoning."
       />
       <Navbar />
 
-      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 pt-24 pb-16 outline-none">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl mx-auto w-full max-w-full min-w-0 px-3.5 sm:px-6 pt-24 pb-16 outline-none overflow-x-hidden">
         
         {/* Navigation Breadcrumb & Status */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 mb-3">
@@ -670,7 +670,7 @@ export default function Advisory() {
           </div>
 
           {/* Sea Region Selector Quick Bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 border-b border-slate-100 text-xs scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 border-b border-slate-100 text-xs scrollbar-none w-full max-w-full min-w-0">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 shrink-0 font-mono">
               REGION:
             </span>
@@ -1125,10 +1125,10 @@ export default function Advisory() {
         {/* Working Two-Column Layout (Scan Complete)                           */}
         {/* ------------------------------------------------------------------- */}
         {!scanning && sortedResults.length > 0 && (
-          <div className="grid lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full min-w-0">
             
             {/* Left Column (5 cols): Ranked Sector Ledger */}
-            <div className="lg:col-span-5 flex flex-col gap-3">
+            <div className="w-full min-w-0 lg:col-span-5 flex flex-col gap-3">
               <div className="flex items-center justify-between px-1 text-xs">
                 <span className="font-serif font-bold text-[#0A1B27] tracking-wide">
                   {currentRole === 'officer'
@@ -1157,7 +1157,7 @@ export default function Advisory() {
 
               {/* For Non-Officer roles, render CoastlineMap as a secondary interactive map */}
               {currentRole !== 'officer' && (
-                <div className="mt-4">
+                <div className="mt-4 w-full min-w-0 overflow-hidden">
                   <CoastlineMap
                     role={currentRole}
                     regionId={selectedRegionId}
@@ -1175,7 +1175,7 @@ export default function Advisory() {
             </div>
 
             {/* Right Column (7 cols): Detailed Sector Advisory Manifest */}
-            <div className="lg:col-span-7 lg:sticky lg:top-24 flex flex-col gap-3">
+            <div className="w-full min-w-0 lg:col-span-7 lg:sticky lg:top-24 flex flex-col gap-3">
               {selected ? (
                 <ReasoningTrace role={currentRole} result={selected} />
               ) : (

@@ -258,14 +258,14 @@ export default function BathymetricSounder({
 
   return (
     <div
-      className={`relative bg-[#F3F9FB] border border-[#CCE4EC] rounded-xl shadow-xs overflow-hidden ${
+      className={`relative w-full max-w-full min-w-0 bg-[#F3F9FB] border border-[#CCE4EC] rounded-xl shadow-xs overflow-hidden ${
         compact ? 'p-2.5' : panoramic ? 'p-3 sm:p-4' : 'p-3.5 sm:p-4'
       }`}
     >
       {/* ========================================================================= */}
       {/* 1. TOP CONTROL BAR: View Mode Toggle & Corridor Switcher */}
       {/* ========================================================================= */}
-      <div className="flex flex-col gap-2.5 pb-3 border-b border-[#D4E8F0]">
+      <div className="flex flex-col gap-2.5 pb-3 border-b border-[#D4E8F0] w-full max-w-full min-w-0">
         
         {/* Mode Selector & Quick Summary */}
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -313,7 +313,7 @@ export default function BathymetricSounder({
 
         {/* 9 Coastal Corridors Navigation Ribbon (Only in Transect View) */}
         {viewMode === 'corridor' && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scrollbar-thin scrollbar-thumb-[#CCE4EC]">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 w-full max-w-full min-w-0 scrollbar-thin scrollbar-thumb-[#CCE4EC]">
             <span className="text-[10px] text-[#5C7788] uppercase tracking-wider font-bold shrink-0 mr-1 flex items-center gap-1">
               <Compass size={11} className="text-[#007A78]" />
               Corridor:
@@ -348,7 +348,7 @@ export default function BathymetricSounder({
 
         {/* Sub-Zones Quick Pills for Current Corridor (Only in Transect View) */}
         {viewMode === 'corridor' && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5 scrollbar-thin">
+          <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5 w-full max-w-full min-w-0 scrollbar-thin">
             <span className="text-[10px] text-[#5C7788] uppercase tracking-wider font-semibold shrink-0 mr-1">
               Sectors:
             </span>
@@ -386,8 +386,8 @@ export default function BathymetricSounder({
       {viewMode === 'corridor' ? (
         /* TRANSECT SVG SOUNDER CANVAS */
         <div
-          className={`relative w-full select-none bg-[#EBF5F8] border border-[#D4E8F0] rounded-lg overflow-hidden mt-2.5 ${
-            panoramic ? 'aspect-[900/220] max-h-[250px]' : 'aspect-[16/7] min-h-[220px]'
+          className={`relative w-full max-w-full min-w-0 select-none bg-[#EBF5F8] border border-[#D4E8F0] rounded-lg overflow-hidden mt-2.5 ${
+            panoramic ? 'aspect-[900/220] max-h-[250px]' : 'aspect-[16/7] min-h-[180px] sm:min-h-[220px]'
           }`}
         >
           <svg
@@ -872,7 +872,7 @@ export default function BathymetricSounder({
       {/* ========================================================================= */}
       {/* 3. ACTIVE SECTOR TELEMETRY STRIP */}
       {/* ========================================================================= */}
-      <div className="mt-2.5 pt-2.5 border-t border-[#D4E8F0] grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+      <div className="mt-2.5 pt-2.5 border-t border-[#D4E8F0] grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs w-full max-w-full min-w-0">
         <div className="bg-white py-1.5 px-3 border border-[#CCE4EC] rounded-lg shadow-2xs">
           <span className="block text-[9px] text-[#5C7788] uppercase tracking-wider font-semibold">Sector &amp; Port Base</span>
           <span className="font-serif font-bold text-[#0A1B27] text-xs sm:text-sm block truncate" title={`${activeZone.sectorCode} • ${activeZone.name}`}>

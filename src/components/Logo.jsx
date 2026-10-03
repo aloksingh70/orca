@@ -47,7 +47,7 @@ export default function Logo({ className = 'h-8 w-auto', light = false }) {
             सागर मित्र
           </span>
         </div>
-        <span className="font-sans text-[9px] font-bold tracking-wide uppercase mt-0.5 text-[#476577]">
+        <span className="font-sans text-[9px] font-bold tracking-wide uppercase mt-0.5 text-[#476577] hidden xs:block">
           ISRO • INCOIS Marine Advisory
         </span>
       </div>

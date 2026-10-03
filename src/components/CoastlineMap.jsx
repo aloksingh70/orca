@@ -473,7 +473,7 @@ export default function CoastlineMap({
 
   return (
     <div
-      className={`bg-white border rounded-xl overflow-hidden shadow-sm transition-all ${
+      className={`bg-white border rounded-xl overflow-hidden shadow-sm transition-all w-full max-w-full min-w-0 ${
         isOfficer
           ? 'border-[#007A78]/40 ring-1 ring-[#007A78]/20 mb-6'
           : 'border-slate-300 mb-4'

@@ -4,18 +4,32 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 body {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  background-color: #091825;
-  color: #FAF6EE;
+  background-color: #EAF4F8;
+  color: #0A1B27;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
   -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Indian tricolor header ribbon */
 .tricolor-ribbon {
   height: 3px;
+  width: 100%;
+  max-width: 100%;
   background: linear-gradient(to right, #14a5e8 0%, #14b3e8 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #106644 66.66%, #106644 100%);
 }
 

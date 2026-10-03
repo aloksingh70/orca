@@ -162,7 +162,7 @@ export default function Login() {
   }, [clearancePass, navigate])
 
   return (
-    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454]">
+    <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454] w-full max-w-full overflow-x-hidden">
       <PageMeta
         title="Sign In — ORCA Marine Portal"
         description="Authenticate with registered marine credentials to access the ORCA maritime command console."
@@ -170,7 +170,7 @@ export default function Login() {
       
       <Navbar />
 
-      <main id="main-content" tabIndex={-1} className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-6 pt-28 pb-16 flex flex-col justify-center outline-none">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-xl mx-auto w-full max-w-full min-w-0 px-4 sm:px-6 pt-28 pb-16 flex flex-col justify-center outline-none overflow-x-hidden">
         
         {/* Active Maritime Corridor Header */}
         <div className="bg-white border border-[#BCDCE6] px-4 py-2.5 rounded-xl mb-5 flex items-center justify-between shadow-2xs text-xs">

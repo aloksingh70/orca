@@ -3,6 +3,9 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      screens: {
+        xs: '420px'
+      },
       colors: {
         // Nautical Light Cartographic Design Tokens (From Maritime Chart UI)
         'nautical-bg': '#EAF4F8',             // Pale ice-cyan maritime chart paper

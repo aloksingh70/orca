@@ -62,30 +62,30 @@ export default function Navbar({ darkGlass = false }) {
         Skip to main content
       </a>
 
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-colors ${
+      <header className={`fixed top-0 left-0 right-0 z-50 w-full max-w-full overflow-x-clip transition-colors ${
         darkGlass
           ? 'bg-[#031520]/80 border-b border-white/10 backdrop-blur-xl text-white'
           : 'bg-white/95 border-b border-[#CCE4EC] backdrop-blur-md text-[#2D4454]'
       }`}>
         {/* Indian National Tricolor Accent Ribbon */}
-        <div className="tricolor-ribbon w-full" />
+        <div className="tricolor-ribbon w-full max-w-full" />
 
       {/* Top Institutional Bar */}
-      <div className={`px-4 sm:px-6 py-1.5 text-[11px] flex items-center justify-between transition-colors ${
+      <div className={`px-3 sm:px-6 py-1.5 text-[11px] flex items-center justify-between transition-colors w-full max-w-full overflow-hidden ${
         darkGlass
           ? 'border-b border-white/10 bg-[#071927]/90 text-slate-300'
           : 'border-b border-[#BCDCE6] bg-[#E2F0F5] text-[#2D4454]'
       }`}>
-        <div className="flex items-center gap-2">
-          <span className={`font-bold tracking-wide ${darkGlass ? 'text-white' : 'text-[#0A1B27]'}`}>
+        <div className="flex items-center gap-1.5 sm:gap-2 truncate min-w-0">
+          <span className={`font-bold tracking-wide truncate ${darkGlass ? 'text-white' : 'text-[#0A1B27]'}`}>
             {t('nav', 'gov')}
           </span>
           <span className="hidden md:inline opacity-40">|</span>
-          <span className={`hidden md:inline font-medium ${darkGlass ? 'text-slate-300' : 'text-[#2D4454]'}`}>
+          <span className={`hidden md:inline font-medium truncate ${darkGlass ? 'text-slate-300' : 'text-[#2D4454]'}`}>
             {t('nav', 'sub')}
           </span>
         </div>
-        <div className="flex items-center gap-3 tabular-nums text-[10px] sm:text-[11px]">
+        <div className="flex items-center gap-2 sm:gap-3 tabular-nums text-[10px] sm:text-[11px] shrink-0">
           <Link
             to="/regions"
             className="hidden sm:inline-flex items-center gap-1.5 text-[#E86014] hover:text-[#FF7722] font-bold transition-colors"
@@ -102,11 +102,11 @@ export default function Navbar({ darkGlass = false }) {
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 w-full max-w-full">
         {/* Left: Logo & Station */}
-        <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center">
-            <Logo className={`h-8 w-auto ${darkGlass ? 'brightness-110' : ''}`} />
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0">
+          <Link to="/" className="flex items-center shrink-0">
+            <Logo className={`h-7 sm:h-8 w-auto ${darkGlass ? 'brightness-110' : ''}`} />
           </Link>
           <div className={`hidden xl:flex flex-col border-l pl-3 text-xs leading-tight ${darkGlass ? 'border-white/10' : 'border-[#CCE4EC]'}`}>
             <span className={`font-serif font-bold ${darkGlass ? 'text-white' : 'text-[#0A1B27]'}`}>
@@ -132,13 +132,13 @@ export default function Navbar({ darkGlass = false }) {
         </nav>
 
         {/* Right: Language Menu & Action Buttons */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Language Selector Dropdown Menu */}
           <LanguageSelector />
 
-          {/* User Auth Status / Sign In Button */}
+          {/* User Auth Status / Sign In Button (hidden on phone, accessible in drawer) */}
           {isAuthenticated ? (
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <div className="flex items-center gap-2 bg-[#E2F0F5] border border-[#BCDCE6] py-1 px-2.5 rounded-lg text-xs shadow-2xs">
                 <div className="flex items-center gap-1.5 font-bold text-[#0A1B27]">
                   {user?.role === 'officer' ? (
@@ -170,7 +170,7 @@ export default function Navbar({ darkGlass = false }) {
                       </span>
                     </>
                   )}
-                  <span className="truncate max-w-[130px]" title={user?.vessel_name || user?.full_name}>
+                  <span className="truncate max-w-[110px]" title={user?.vessel_name || user?.full_name}>
                     {user?.role === 'officer' ? user?.full_name : (user?.vessel_name || user?.full_name)}
                   </span>
                 </div>
@@ -188,13 +188,12 @@ export default function Navbar({ darkGlass = false }) {
             </div>
           ) : (
             !isLogin && (
-              <div className="flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-1.5">
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-1.5 border border-[#007A78] text-[#007A78] hover:bg-[#007A78] hover:text-white px-3.5 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs rounded-xs"
+                  className="inline-flex items-center gap-1.5 border border-[#007A78] text-[#007A78] hover:bg-[#007A78] hover:text-white px-3 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs rounded-xs"
                 >
                   <KeyRound size={13} />
-                  <span className="hidden xs:inline">{t('auth', 'tabSignIn').split(' ')[0]}</span>
                   <span>Sign In</span>
                 </Link>
               </div>
@@ -204,24 +203,25 @@ export default function Navbar({ darkGlass = false }) {
           {!isAdvisory ? (
             <Link
               to="/advisory"
-              className="inline-flex items-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white px-3.5 sm:px-4 py-2 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 bg-[#007A78] hover:bg-[#006361] text-white px-2.5 sm:px-4 py-1.5 sm:py-2 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98] rounded-xs"
             >
-              <Compass size={14} className="text-white" />
-              <span className="hidden xs:inline">{t('nav', 'launchAdvisory')}</span>
-              <span className="xs:hidden">Advisory</span>
+              <Compass size={14} className="text-white shrink-0" />
+              <span className="hidden sm:inline">{t('nav', 'launchAdvisory')}</span>
+              <span className="sm:hidden">Advisory</span>
             </Link>
           ) : (
             <Link
               to="/overview"
-              className="inline-flex items-center gap-1.5 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-3.5 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors"
+              className="inline-flex items-center gap-1.5 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-2.5 sm:px-3.5 py-1.5 font-sans font-bold text-xs uppercase tracking-wider transition-colors rounded-xs"
             >
-              <span>{t('nav', 'returnOverview')}</span>
+              <span className="hidden sm:inline">{t('nav', 'returnOverview')}</span>
+              <span className="sm:hidden">Overview</span>
             </Link>
           )}
 
           {/* Mobile hamburger */}
           <button
-            className="lg:hidden text-[#0A1B27] p-1.5 rounded hover:bg-slate-100"
+            className="lg:hidden text-[#0A1B27] p-1.5 rounded hover:bg-slate-100 shrink-0"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? 'Close station menu' : 'Open station menu'}
             aria-expanded={open}
