@@ -26,6 +26,7 @@ import { zones } from '../lib/zones.js'
 import { REGIONS } from '../lib/regions.js'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import LoginModal from '../components/LoginModal.jsx'
 
 const BRIDGE_STATIONS = [
   {
@@ -83,6 +84,8 @@ export default function Landing() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [activeRegionFilter, setActiveRegionFilter] = useState('all')
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [modalRedirectPath, setModalRedirectPath] = useState('/advisory')
 
   const displayedZones = activeRegionFilter === 'all'
     ? zones
@@ -91,6 +94,14 @@ export default function Landing() {
   // Intercept any interactive button/action clicks for unauthenticated visitors while allowing scrolling
   const handleLandingClickCapture = (e) => {
     if (isAuthenticated) return
+
+    // 0. Do not intercept any clicks happening inside the login modal itself
+    if (
+      e.target.closest('[data-login-modal="true"]') ||
+      e.target.closest('#login-modal')
+    ) {
+      return
+    }
 
     // 1. Allow Language selector dropdown interactions so visitor can change language & read
     if (
@@ -121,10 +132,11 @@ export default function Landing() {
       ) {
         return // Allow home link and in-page scroll navigation!
       }
-      // Any other link (e.g., /advisory, /regions, /about, /methodology)
+      // Any other link (e.g., /advisory, /regions, /about, /methodology, /login)
       e.preventDefault()
       e.stopPropagation()
-      navigate('/login', { state: { from: href || '/advisory', reason: 'action_required' } })
+      setModalRedirectPath(href || '/advisory')
+      setShowLoginModal(true)
       return
     }
 
@@ -133,7 +145,8 @@ export default function Landing() {
     if (button) {
       e.preventDefault()
       e.stopPropagation()
-      navigate('/login', { state: { from: '/advisory', reason: 'action_required' } })
+      setModalRedirectPath('/advisory')
+      setShowLoginModal(true)
       return
     }
   }
@@ -606,6 +619,17 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Login Pop-up Modal with Entrance Animation */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        redirectPath={modalRedirectPath}
+        onSuccess={() => {
+          setShowLoginModal(false)
+          navigate(modalRedirectPath || '/advisory')
+        }}
+      />
     </div>
   )
 }
