@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Waves,
   Wind,
@@ -25,6 +25,7 @@ import PageMeta from '../components/PageMeta.jsx'
 import { zones } from '../lib/zones.js'
 import { REGIONS } from '../lib/regions.js'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const BRIDGE_STATIONS = [
   {
@@ -79,14 +80,69 @@ const BRIDGE_STATIONS = [
 
 export default function Landing() {
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const [activeRegionFilter, setActiveRegionFilter] = useState('all')
 
   const displayedZones = activeRegionFilter === 'all'
     ? zones
     : zones.filter((z) => z.regionId === activeRegionFilter)
 
+  // Intercept any interactive button/action clicks for unauthenticated visitors while allowing scrolling
+  const handleLandingClickCapture = (e) => {
+    if (isAuthenticated) return
+
+    // 1. Allow Language selector dropdown interactions so visitor can change language & read
+    if (
+      e.target.closest('[data-allow-guest="true"]') ||
+      e.target.closest('.language-selector-wrapper') ||
+      e.target.closest('.language-menu') ||
+      e.target.closest('button[title*="Language"]')
+    ) {
+      return
+    }
+
+    // 2. Allow mobile hamburger button toggle so phone users can open/close drawer
+    if (e.target.closest('[data-mobile-toggle="true"]')) {
+      return
+    }
+
+    // 3. In-page anchor links that scroll the page (e.g. href="#faq", href="/#operational-reality", etc.) and Home/Overview logo links
+    const anchor = e.target.closest('a')
+    if (anchor) {
+      const href = anchor.getAttribute('href') || ''
+      if (
+        href === '/' ||
+        href === '/overview' ||
+        href === '/landing' ||
+        href.startsWith('#') ||
+        href.startsWith('/#') ||
+        (href.includes('#') && !href.startsWith('http') && !href.startsWith('/advisory') && !href.startsWith('/regions'))
+      ) {
+        return // Allow home link and in-page scroll navigation!
+      }
+      // Any other link (e.g., /advisory, /regions, /about, /methodology)
+      e.preventDefault()
+      e.stopPropagation()
+      navigate('/login', { state: { from: href || '/advisory', reason: 'action_required' } })
+      return
+    }
+
+    // 4. Any button element or clickable role (scan simulation, inspect, corridor buttons, filters, etc.)
+    const button = e.target.closest('button, [role="button"]')
+    if (button) {
+      e.preventDefault()
+      e.stopPropagation()
+      navigate('/login', { state: { from: '/advisory', reason: 'action_required' } })
+      return
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#EAF4F8] text-[#2D4454] font-sans selection:bg-[#007A78] selection:text-white w-full max-w-full overflow-x-hidden">
+    <div
+      onClickCapture={handleLandingClickCapture}
+      className="min-h-screen bg-[#EAF4F8] text-[#2D4454] font-sans selection:bg-[#007A78] selection:text-white w-full max-w-full overflow-x-hidden"
+    >
       <PageMeta
         title="ORCA — Marine Fishing Zone Advisory | SIH26176"
         description="Operational marine harvesting advisory and explainable AI safety intelligence for coastal mariners across India's maritime corridors."
@@ -382,7 +438,8 @@ export default function Landing() {
                           </td>
                           <td className="py-3.5 px-4 text-right">
                             <Link
-                              to="/advisory"
+                              to={isAuthenticated ? "/advisory" : "/login"}
+                              state={{ from: '/advisory', reason: 'action_required' }}
                               className="inline-flex items-center gap-1 text-[#007A78] hover:text-[#061219] font-bold text-xs group-hover:translate-x-0.5 transition-all"
                             >
                               <span>Inspect</span>
@@ -432,7 +489,8 @@ export default function Landing() {
 
               <div className="shrink-0">
                 <Link
-                  to="/advisory"
+                  to={isAuthenticated ? "/advisory" : "/login"}
+                  state={{ from: '/advisory', reason: 'action_required' }}
                   className="inline-flex items-center justify-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-6 py-3.5 font-sans text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm"
                 >
                   <Calendar size={14} className="text-[#007A78]" />
@@ -462,13 +520,15 @@ export default function Landing() {
 
               <div className="flex flex-wrap items-center gap-3.5">
                 <Link
-                  to="/advisory"
+                  to={isAuthenticated ? "/advisory" : "/login"}
+                  state={{ from: '/advisory', reason: 'action_required' }}
                   className="bg-[#007A78] hover:bg-[#006361] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-98 rounded-lg"
                 >
                   Launch Working Console
                 </Link>
                 <Link
-                  to="/regions"
+                  to={isAuthenticated ? "/regions" : "/login"}
+                  state={{ from: '/regions', reason: 'action_required' }}
                   className="bg-white hover:bg-slate-50 text-[#0A1B27] border border-[#CCE4EC] px-6 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors shadow-2xs rounded-lg"
                 >
                   Browse Regional Gateways
@@ -534,7 +594,13 @@ export default function Landing() {
             <span>·</span>
             <Link to="/methodology" className="hover:text-[#007A78]">Methodology</Link>
             <span>·</span>
-            <Link to="/advisory" className="hover:text-[#007A78]">Advisory Console</Link>
+            <Link
+              to={isAuthenticated ? "/advisory" : "/login"}
+              state={{ from: '/advisory', reason: 'action_required' }}
+              className="hover:text-[#007A78]"
+            >
+              Advisory Console
+            </Link>
             <span>·</span>
             <span>© 2026 ORCA Coastal Authority</span>
           </div>

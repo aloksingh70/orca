@@ -2,6 +2,7 @@
   "name": "orca-sih26176",
   "private": true,
   "version": "1.0.0",
+  "homepage": "https://orca-advisory.vercel.app/",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -87,7 +87,8 @@ export default function Navbar({ darkGlass = false }) {
         </div>
         <div className="flex items-center gap-2 sm:gap-3 tabular-nums text-[10px] sm:text-[11px] shrink-0">
           <Link
-            to="/regions"
+            to={isAuthenticated ? "/regions" : "/login"}
+            state={{ from: '/regions', reason: 'action_required' }}
             className="hidden sm:inline-flex items-center gap-1.5 text-[#E86014] hover:text-[#FF7722] font-bold transition-colors"
             title="Switch Sea Region"
           >
@@ -134,7 +135,9 @@ export default function Navbar({ darkGlass = false }) {
         {/* Right: Language Menu & Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Language Selector Dropdown Menu */}
-          <LanguageSelector />
+          <div data-allow-guest="true" className="language-selector-wrapper">
+            <LanguageSelector />
+          </div>
 
           {/* User Auth Status / Sign In Button (hidden on phone, accessible in drawer) */}
           {isAuthenticated ? (
@@ -202,7 +205,8 @@ export default function Navbar({ darkGlass = false }) {
 
           {!isAdvisory ? (
             <Link
-              to="/advisory"
+              to={isAuthenticated ? "/advisory" : "/login"}
+              state={{ from: '/advisory', reason: 'action_required' }}
               className="inline-flex items-center gap-1.5 bg-[#007A78] hover:bg-[#006361] text-white px-2.5 sm:px-4 py-1.5 sm:py-2 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98] rounded-xs"
             >
               <Compass size={14} className="text-white shrink-0" />
@@ -221,7 +225,8 @@ export default function Navbar({ darkGlass = false }) {
 
           {/* Mobile hamburger */}
           <button
-            className="lg:hidden text-[#0A1B27] p-1.5 rounded hover:bg-slate-100 shrink-0"
+            data-mobile-toggle="true"
+            className="lg:hidden text-[#0A1B27] p-1.5 rounded hover:bg-slate-100 shrink-0 cursor-pointer"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? 'Close station menu' : 'Open station menu'}
             aria-expanded={open}
@@ -242,7 +247,9 @@ export default function Navbar({ darkGlass = false }) {
             <span className="text-xs text-[#5C7788] font-semibold">
               ISRO SIH26176 • Sagar Roads Station
             </span>
-            <LanguageSelector compact={false} />
+            <div data-allow-guest="true" className="language-selector-wrapper">
+              <LanguageSelector compact={false} />
+            </div>
           </div>
 
           {/* Mobile User Profile or Login */}
@@ -292,7 +299,8 @@ export default function Navbar({ darkGlass = false }) {
             </a>
           ))}
           <Link
-            to="/advisory"
+            to={isAuthenticated ? "/advisory" : "/login"}
+            state={{ from: '/advisory', reason: 'action_required' }}
             className="mt-2 inline-flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white px-4 py-2 font-sans font-bold text-sm uppercase tracking-wider transition-all shadow-sm"
             onClick={() => setOpen(false)}
           >

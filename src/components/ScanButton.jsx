@@ -1,12 +1,25 @@
+import { useNavigate } from 'react-router-dom'
 import { Compass, Loader2 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function ScanButton({ onScan, scanning, hasResults }) {
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+
+  const handleClick = (e) => {
+    if (!isAuthenticated) {
+      e.preventDefault()
+      navigate('/login', { state: { from: '/advisory', reason: 'action_required' } })
+      return
+    }
+    if (onScan) onScan(e)
+  }
 
   return (
     <button
-      onClick={onScan}
+      onClick={handleClick}
       disabled={scanning}
       style={{
         backgroundColor: scanning ? '#475569' : '#E86014',

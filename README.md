@@ -1,5 +1,6 @@
 # ORCA — Marine EcoSystem Reasoning with Collaborative Agents
 
+[![Live Vercel Deployment](https://img.shields.io/badge/Live%20Console-orca--advisory.vercel.app-007A78.svg?style=for-the-badge&logo=vercel)](https://orca-advisory.vercel.app/)
 [![Smart India Hackathon 2026](https://img.shields.io/badge/SIH-2026-blue.svg)](https://sih.gov.in/)
 [![ISRO Problem Statement](https://img.shields.io/badge/Problem%20Statement-SIH26176%20(ISRO)-orange.svg)](https://sih.gov.in/)
 [![FastAPI Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-009688.svg)](https://fastapi.tiangolo.com/)
@@ -7,6 +8,7 @@
 [![Telemetry Live Feeds](https://img.shields.io/badge/Telemetry-Copernicus%20%7C%20ECMWF%20%7C%20NOAA%20%7C%20INCOIS-007A78.svg)](https://open-meteo.com/)
 [![Tests Status](https://img.shields.io/badge/Tests-12%2F12%20Passed-brightgreen.svg)](#automated-testing)
 
+> 🌐 **Live Web Application**: [https://orca-advisory.vercel.app/](https://orca-advisory.vercel.app/)  
 > **Autonomous Multi-Agent Marine Harvesting Advisory & Maritime Surveillance Platform for the Bay of Bengal and Indian Coastline.**  
 > Developed for **Smart India Hackathon 2026 (Problem Statement SIH26176 — Indian Space Research Organisation / ISRO)** by **Team Tech Titans**.
 

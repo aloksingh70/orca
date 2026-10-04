@@ -47,3 +47,7 @@ backend/venv/
 *.sqlite
 *.sqlite3
 
+# Scratch directory
+scratch/
+
+

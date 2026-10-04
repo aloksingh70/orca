@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   ShieldCheck,
   Compass,
@@ -15,18 +15,26 @@ import {
   Cpu,
   Mail,
   User,
-  Check
+  Check,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ChevronLeft
 } from 'lucide-react'
 import Navbar from '../components/Navbar.jsx'
 import { getRegionById } from '../lib/regions.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { DEMO_USERS } from '../lib/demoUsers.js'
 import PageMeta from '../components/PageMeta.jsx'
 
 export default function Login() {
   const { login, register, officerVerify } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromPath = location.state?.from || '/advisory'
+  const isActionRequired = location.state?.reason === 'action_required' || Boolean(location.state?.from)
 
   const [selectedRegionId] = useState(() => {
     try {
@@ -46,6 +54,7 @@ export default function Login() {
   // Form Fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
   const [selectedRole, setSelectedRole] = useState('skipper') // 'skipper' | 'officer' | 'researcher' | 'port_crew'
   const [officerType, setOfficerType] = useState('incois_scientist')
@@ -58,6 +67,27 @@ export default function Login() {
   // Clearance Pass presentation after successful login
   const [clearancePass, setClearancePass] = useState(null)
   const [countdown, setCountdown] = useState(2)
+
+  const handleDemoSignIn = async (demoUser) => {
+    setErrorMsg('')
+    setSuccessMsg('')
+    setEmail(demoUser.email)
+    setPassword(demoUser.password)
+    setSubmitting(true)
+
+    try {
+      const verifiedUser = await login(demoUser.email, demoUser.password)
+      setClearancePass({
+        user: verifiedUser,
+        role: verifiedUser.role || 'skipper',
+        timestamp: new Date().toLocaleTimeString('en-GB') + ' IST'
+      })
+    } catch (err) {
+      setErrorMsg(err.message || 'Demo sign-in failed. Please retry.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const OFFICER_CATEGORIES = [
     {
@@ -151,7 +181,7 @@ export default function Login() {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer)
-            navigate('/advisory')
+            navigate(fromPath, { replace: true })
             return 0
           }
           return prev - 1
@@ -159,7 +189,7 @@ export default function Login() {
       }, 1000)
     }
     return () => clearInterval(timer)
-  }, [clearancePass, navigate])
+  }, [clearancePass, navigate, fromPath])
 
   return (
     <div className="bg-[#EAF4F8] min-h-screen flex flex-col font-sans text-[#2D4454] w-full max-w-full overflow-x-hidden">
@@ -172,6 +202,28 @@ export default function Login() {
 
       <main id="main-content" tabIndex={-1} className="flex-1 max-w-xl mx-auto w-full max-w-full min-w-0 px-4 sm:px-6 pt-28 pb-16 flex flex-col justify-center outline-none overflow-x-hidden">
         
+        {/* Navigation Breadcrumb / Return to Overview */}
+        <div className="mb-3 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#007A78] hover:text-[#0A1B27] uppercase tracking-wider transition-colors"
+          >
+            <ChevronLeft size={16} />
+            <span>Return to Overview</span>
+          </Link>
+          <span className="text-[11px] font-mono text-[#5C7788]">
+            ORCA Maritime Identity Gate
+          </span>
+        </div>
+
+        {/* Action Required Alert Banner */}
+        {isActionRequired && (
+          <div className="mb-4 p-3 bg-[#E1F3F5] border border-[#B9E4E8] rounded-xl flex items-center gap-2.5 text-xs text-[#007A78] font-medium shadow-2xs animate-fade-in">
+            <Lock size={15} className="shrink-0 text-[#007A78]" />
+            <span>Please sign in with credentials or click any 1-click demo profile below to access ORCA operations.</span>
+          </div>
+        )}
+
         {/* Active Maritime Corridor Header */}
         <div className="bg-white border border-[#BCDCE6] px-4 py-2.5 rounded-xl mb-5 flex items-center justify-between shadow-2xs text-xs">
           <div className="flex items-center gap-2">
@@ -227,7 +279,7 @@ export default function Login() {
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => navigate('/advisory')}
+                onClick={() => navigate(fromPath, { replace: true })}
                 className="w-full inline-flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white py-3.5 px-6 rounded-xl font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm"
               >
                 <span>Entering Advisory Console ({countdown}s)…</span>
@@ -295,58 +347,114 @@ export default function Login() {
 
             {/* SIGN IN FORM */}
             {authMode === 'signin' ? (
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1.5">
-                    Email Address *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. skipper@orca.gov.in"
-                      className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-3 rounded-xl outline-none transition-all font-mono text-[#0A1B27]"
-                    />
-                    <Mail size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+              <div className="space-y-4">
+                {/* 1-Click Demo Profiles */}
+                <div className="p-3.5 bg-gradient-to-br from-[#EAF4F8] to-[#D5EAF2] border border-[#BCDCE6] rounded-xl shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-[#007A78]" />
+                      <span className="text-xs font-bold text-[#0A1B27] uppercase tracking-wider">
+                        Instant 1-Click Demo Profiles
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#007A78] bg-white/70 px-2 py-0.5 rounded-full border border-[#BCDCE6] font-semibold">
+                      Sandbox Ready
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#5C7788] mb-2.5">
+                    Click any authorized maritime profile below to log in immediately with role permissions:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {DEMO_USERS.map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => handleDemoSignIn(u)}
+                        className="flex items-center justify-between gap-2 p-2 bg-white hover:bg-emerald-50/60 border border-[#BCDCE6] hover:border-[#007A78] rounded-lg text-left transition-all group cursor-pointer disabled:opacity-50 shadow-xs hover:shadow-sm"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] font-bold text-[#0A1B27] truncate group-hover:text-[#007A78]">
+                            {u.name}
+                          </div>
+                          <div className="text-[10px] text-[#5C7788] truncate">{u.title}</div>
+                        </div>
+                        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase shrink-0 ${u.badgeClass}`}>
+                          {u.badgeText}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1.5">
-                    Password *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-3 rounded-xl outline-none transition-all text-[#0A1B27]"
-                    />
-                    <KeyRound size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
-                  </div>
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-slate-200"></div>
+                  <span className="flex-shrink mx-3 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+                    or enter credentials manually
+                  </span>
+                  <div className="flex-grow border-t border-slate-200"></div>
                 </div>
 
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full inline-flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white py-3.5 px-6 rounded-xl font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-98 cursor-pointer disabled:opacity-50"
-                  >
-                    {submitting ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <span>Sign In to Console</span>
-                        <ArrowRight size={14} />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1.5">
+                      Email Address *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="e.g. skipper@orca.gov.in"
+                        className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-3 rounded-xl outline-none transition-all font-mono text-[#0A1B27]"
+                      />
+                      <Mail size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1.5">
+                      Password *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-3 rounded-xl outline-none transition-all text-[#0A1B27] pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-3 text-slate-400 hover:text-[#007A78] transition-colors cursor-pointer p-0.5"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white py-3.5 px-6 rounded-xl font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-98 cursor-pointer disabled:opacity-50"
+                    >
+                      {submitting ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span>Sign In to Console</span>
+                          <ArrowRight size={14} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             ) : (
               /* REGISTER FORM */
               <form onSubmit={handleRegister} className="space-y-4">
@@ -382,15 +490,25 @@ export default function Login() {
                   <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1.5">
                     Password (min. 6 chars) *
                   </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-2.5 rounded-xl outline-none transition-all text-[#0A1B27]"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-2.5 rounded-xl outline-none transition-all text-[#0A1B27] pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-[#007A78] transition-colors cursor-pointer p-0.5"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>

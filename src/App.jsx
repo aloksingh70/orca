@@ -31,11 +31,26 @@ function AppRoutes() {
       <Route path="/landing" element={<Landing />} />
 
       {/* Coastal Sea Region Selection (Step 1) */}
-      <Route path="/regions" element={<Regions />} />
-      <Route path="/select-region" element={<Regions />} />
+      <Route
+        path="/regions"
+        element={
+          isAuthenticated ? <Regions /> : <Navigate to="/" replace />
+        }
+      />
+      <Route
+        path="/select-region"
+        element={
+          isAuthenticated ? <Regions /> : <Navigate to="/" replace />
+        }
+      />
 
-      {/* Advisory Console (Guest / Demo / Authenticated) */}
-      <Route path="/advisory" element={<Advisory />} />
+      {/* Advisory Console (Authenticated Only - Unauthenticated goes to Overview) */}
+      <Route
+        path="/advisory"
+        element={
+          isAuthenticated ? <Advisory /> : <Navigate to="/" replace />
+        }
+      />
 
       {/* Authentication */}
       <Route

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Waves,
   Wind,
@@ -20,8 +20,11 @@ import {
   Eye,
   HelpCircle
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function AnimatedShowcase() {
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('what') // 'what' | 'how'
   const [simulating, setSimulating] = useState(false)
   const [simStep, setSimStep] = useState(0)
@@ -43,6 +46,10 @@ export default function AnimatedShowcase() {
   ]
 
   const triggerSimulation = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/advisory', reason: 'action_required' } })
+      return
+    }
     setSimulating(true)
     setSimStep(1)
     setTimeout(() => setSimStep(2), 600)
@@ -436,7 +443,8 @@ export default function AnimatedShowcase() {
                 </div>
 
                 <Link
-                  to="/advisory"
+                  to={isAuthenticated ? "/advisory" : "/login"}
+                  state={{ from: '/advisory', reason: 'action_required' }}
                   className="shrink-0 inline-flex items-center gap-2 bg-[#007A78] hover:bg-[#006361] text-white px-5 py-2.5 rounded-lg font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95"
                 >
                   <span>Launch Live Advisory Tool</span>

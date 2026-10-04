@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { Compass, TableProperties, ShieldCheck, Radio, Ship } from 'lucide-react'
 import BathymetricSounder from './BathymetricSounder.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Hero() {
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
   const [chartInfo, setChartInfo] = useState({
     chartTitle: 'Chart IN-351: Northern Bengal Shelf & Canyon Head',
     chartMeta: "Scale 1:150,000 · Mercator Projection · LAT 20°40'N – 21°55'N · LONG 86°50'E – 89°20'E",
@@ -44,14 +46,16 @@ export default function Hero() {
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 mb-8 w-full sm:w-auto">
               <Link
-                to="/advisory"
+                to={isAuthenticated ? "/advisory" : "/login"}
+                state={{ from: '/advisory', reason: 'action_required' }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#061219] hover:bg-[#0E2332] text-white px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-[0.98] rounded-xs"
               >
                 <Compass size={14} className="text-[#007A78]" />
                 <span>{t('hero', 'openAdvisory')}</span>
               </Link>
               <Link
-                to="/regions"
+                to={isAuthenticated ? "/regions" : "/login"}
+                state={{ from: '/regions', reason: 'action_required' }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#E2F0F5] hover:bg-[#D3E8EF] text-[#0A1B27] border border-[#BCDCE6] px-5 py-3.5 font-sans font-semibold text-xs uppercase tracking-wider transition-colors rounded-xs"
               >
                 <Ship size={14} className="text-[#007A78]" />
