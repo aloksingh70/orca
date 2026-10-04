@@ -25,6 +25,7 @@ import { getRegionById } from '../lib/regions.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import PageMeta from '../components/PageMeta.jsx'
+import { ROLE_CONFIGS } from '../components/LoginModal.jsx'
 
 export default function Login() {
   const { login, register, officerVerify } = useAuth()
@@ -54,13 +55,13 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
-  const [selectedRole, setSelectedRole] = useState('skipper') // 'skipper' | 'officer' | 'researcher' | 'port_crew'
+  const [selectedRole, setSelectedRole] = useState('skipper') // 'skipper' | 'officer' | 'researcher' | 'port_crew' | 'general'
   const [officerType, setOfficerType] = useState('incois_scientist')
   const [govtIdNumber, setGovtIdNumber] = useState('')
   const [department, setDepartment] = useState('INCOIS — Ministry of Earth Sciences')
   const [vesselName, setVesselName] = useState('')
   const [regNumber, setRegNumber] = useState('')
-  const [harborBase, setHarborBase] = useState('Shankarpur Principal Fishing Harbour')
+  const [harborBase, setHarborBase] = useState('')
 
   // Clearance Pass presentation after successful login
   const [clearancePass, setClearancePass] = useState(null)
@@ -115,6 +116,8 @@ export default function Login() {
     setSuccessMsg('')
     setSubmitting(true)
 
+    const roleCfg = ROLE_CONFIGS[selectedRole] || ROLE_CONFIGS.skipper
+
     try {
       let verifiedUser = null
       if (selectedRole === 'officer') {
@@ -124,23 +127,23 @@ export default function Login() {
           department: department,
           email: email,
           password: password,
-          full_name: fullName || 'Marine Officer'
+          full_name: fullName || roleCfg.namePlaceholder.replace('e.g. ', '')
         })
       } else {
         verifiedUser = await register({
           email: email,
           password: password,
-          full_name: fullName || 'Master Mariner',
-          role: selectedRole,
-          vessel_name: vesselName,
+          full_name: fullName || roleCfg.namePlaceholder.replace('e.g. ', ''),
+          role: selectedRole === 'general' ? 'public' : selectedRole,
+          vessel_name: vesselName || roleCfg.defaultVessel || '',
           registration_number: regNumber,
-          harbor_base: harborBase
+          harbor_base: harborBase || roleCfg.defaultHarbor || ''
         })
       }
 
       setClearancePass({
         user: verifiedUser,
-        role: selectedRole,
+        role: selectedRole === 'general' ? 'General User' : roleCfg.label,
         timestamp: new Date().toLocaleTimeString('en-GB') + ' IST'
       })
     } catch (err) {
@@ -336,7 +339,7 @@ export default function Login() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="e.g. skipper@orca.gov.in"
+                        placeholder="enter your email"
                         className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-3 rounded-xl outline-none transition-all font-mono text-[#0A1B27]"
                       />
                       <Mail size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
@@ -397,7 +400,7 @@ export default function Login() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Capt. Rajesh Mondal"
+                    placeholder={ROLE_CONFIGS[selectedRole]?.namePlaceholder || 'e.g. Capt. Rajesh Mondal'}
                     className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-2.5 rounded-xl outline-none transition-all text-[#0A1B27]"
                   />
                 </div>
@@ -411,7 +414,7 @@ export default function Login() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. skipper@orca.gov.in"
+                    placeholder={ROLE_CONFIGS[selectedRole]?.emailPlaceholder || 'enter your email'}
                     className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-2.5 rounded-xl outline-none transition-all font-mono text-[#0A1B27]"
                   />
                 </div>
@@ -454,6 +457,7 @@ export default function Login() {
                     <option value="officer">Coast Guard / Fisheries Enforcement Officer</option>
                     <option value="researcher">Oceanographic Researcher / Marine Scientist</option>
                     <option value="port_crew">Port Authority &amp; Harbor Logistics Crew</option>
+                    <option value="general">General User / Coastal Citizen</option>
                   </select>
                 </div>
 
@@ -493,29 +497,29 @@ export default function Login() {
                   </div>
                 )}
 
-                {selectedRole === 'skipper' && (
+                {selectedRole !== 'officer' && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1">
-                        Vessel Name
+                        {ROLE_CONFIGS[selectedRole]?.field1Label || 'Vessel Name'}
                       </label>
                       <input
                         type="text"
                         value={vesselName}
                         onChange={(e) => setVesselName(e.target.value)}
-                        placeholder="FB Maa Ganga"
+                        placeholder={ROLE_CONFIGS[selectedRole]?.field1Placeholder || 'FB Maa Ganga'}
                         className="w-full bg-slate-50 border border-slate-300 text-xs px-3 py-2 rounded-lg outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1">
-                        Registration ID
+                        {ROLE_CONFIGS[selectedRole]?.field2Label || 'Harbor Base'}
                       </label>
                       <input
                         type="text"
-                        value={regNumber}
-                        onChange={(e) => setRegNumber(e.target.value)}
-                        placeholder="IND-WB-24-00918"
+                        value={harborBase}
+                        onChange={(e) => setHarborBase(e.target.value)}
+                        placeholder={ROLE_CONFIGS[selectedRole]?.field2Placeholder || 'Shankarpur Principal Fishing Harbour'}
                         className="w-full bg-slate-50 border border-slate-300 text-xs px-3 py-2 rounded-lg outline-none font-mono"
                       />
                     </div>
@@ -532,7 +536,7 @@ export default function Login() {
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>Create Account &amp; Sign In</span>
+                        <span>{ROLE_CONFIGS[selectedRole]?.btnText || 'Create Account & Sign In'}</span>
                         <ArrowRight size={14} />
                       </>
                     )}

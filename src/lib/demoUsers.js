@@ -168,6 +168,31 @@ export const DEMO_USERS = [
       'Interactive zone prediction challenge',
       'Zero-friction entry without maritime jargon or setup'
     ]
+  },
+  {
+    id: 'general',
+    role: 'public',
+    officerType: null,
+    email: 'citizen@orca.in',
+    password: 'orca123',
+    name: 'Aarav Mehta',
+    title: 'General User / Coastal Citizen',
+    cadre: 'Coastal Citizen · Public Explainer Mode',
+    vesselOrStation: 'Digha Coastal Sector · Bay of Bengal',
+    badgeOrReg: 'CITIZEN-GUEST',
+    badgeText: 'GENERAL',
+    accentColor: 'sky',
+    badgeClass: 'bg-sky-100 text-sky-800 border-sky-300',
+    borderHover: 'hover:border-sky-500',
+    btnClass: 'bg-sky-600 hover:bg-sky-700 text-white',
+    deckName: 'Coastal Resident & Public Explainer Deck',
+    keyCapabilities: [
+      'Guided walkthrough of all 4 AI agents & safety veto',
+      'Try-It-Yourself annual season & ban slider',
+      'Jargon-free translations alongside real satellite metrics',
+      'Interactive zone prediction challenge',
+      'Zero-friction entry without maritime jargon or setup'
+    ]
   }
 ]
 

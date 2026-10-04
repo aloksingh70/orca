@@ -19,6 +19,84 @@ import {
 import { useAuth } from '../context/AuthContext.jsx'
 import Logo from './Logo.jsx'
 
+export const ROLE_CONFIGS = {
+  skipper: {
+    id: 'skipper',
+    label: 'Vessel Skipper',
+    icon: Ship,
+    namePlaceholder: 'e.g. Capt. Rajesh Mondal',
+    emailPlaceholder: 'skipper@orca.gov.in',
+    field1Label: 'Vessel Name',
+    field1Placeholder: 'e.g. M/V Sagar Kripa',
+    field2Label: 'Harbor Base',
+    field2Placeholder: 'e.g. Shankarpur Principal Fishing Harbour',
+    btnText: 'Create Maritime Account',
+    defaultHarbor: 'Shankarpur Principal Fishing Harbour',
+    defaultVessel: 'M/V Sagar Kripa'
+  },
+  officer: {
+    id: 'officer',
+    label: 'Marine Officer',
+    icon: ShieldCheck,
+    namePlaceholder: 'e.g. Cmdr. Vikram Rathore',
+    emailPlaceholder: 'officer@orca.gov.in',
+    badgePlaceholder: 'e.g. ICG-PATROL-402',
+    deptPlaceholder: 'e.g. Indian Coast Guard — Ministry of Defence',
+    btnText: 'Verify & Create Officer Account',
+    defaultDept: 'INCOIS — Ministry of Earth Sciences'
+  },
+  researcher: {
+    id: 'researcher',
+    label: 'INCOIS Scientist',
+    icon: Compass,
+    namePlaceholder: 'e.g. Dr. Ananya Sen',
+    emailPlaceholder: 'scientist@incois.res.in',
+    field1Label: 'Research Vessel / Lab',
+    field1Placeholder: 'e.g. RV Sindhu Sadhana',
+    field2Label: 'Research Station',
+    field2Placeholder: 'e.g. INCOIS Oceanographic Station',
+    btnText: 'Create Scientist Account',
+    defaultHarbor: 'INCOIS Oceanographic Station',
+    defaultVessel: 'RV Sindhu Sadhana'
+  },
+  port_crew: {
+    id: 'port_crew',
+    label: 'Port Master',
+    icon: Anchor,
+    namePlaceholder: 'e.g. Capt. B. K. Halder',
+    emailPlaceholder: 'portmaster@sagar.port.gov.in',
+    field1Label: 'Vessel / Terminal',
+    field1Placeholder: 'e.g. Pilot Vessel Sagar Sandhya',
+    field2Label: 'Port Authority',
+    field2Placeholder: 'e.g. Kolkata Port Trust & Sagar Anchorage',
+    btnText: 'Create Port Master Account',
+    defaultHarbor: 'Kolkata Port Trust & Sagar Anchorage',
+    defaultVessel: 'Pilot Vessel Sagar Sandhya'
+  },
+  general: {
+    id: 'general',
+    label: 'General User',
+    icon: User,
+    namePlaceholder: 'e.g. Aarav Mehta',
+    emailPlaceholder: 'citizen@orca.in',
+    field1Label: 'City / District',
+    field1Placeholder: 'e.g. Digha, West Bengal',
+    field2Label: 'Coastal Interest',
+    field2Placeholder: 'e.g. Coastal Weather & Marine Safety',
+    btnText: 'Create General User Account',
+    defaultHarbor: 'Coastal Resident',
+    defaultVessel: 'Citizen Account'
+  }
+}
+
+export const MARITIME_ROLES = [
+  ROLE_CONFIGS.skipper,
+  ROLE_CONFIGS.officer,
+  ROLE_CONFIGS.researcher,
+  ROLE_CONFIGS.port_crew,
+  ROLE_CONFIGS.general
+]
+
 export default function LoginModal({
   isOpen,
   onClose,
@@ -44,7 +122,7 @@ export default function LoginModal({
   const [department, setDepartment] = useState('INCOIS — Ministry of Earth Sciences')
   const [vesselName, setVesselName] = useState('')
   const [regNumber, setRegNumber] = useState('')
-  const [harborBase, setHarborBase] = useState('Shankarpur Principal Fishing Harbour')
+  const [harborBase, setHarborBase] = useState('')
 
   // Clearance Pass on success
   const [clearancePass, setClearancePass] = useState(null)
@@ -129,6 +207,8 @@ export default function LoginModal({
     setErrorMsg('')
     setSubmitting(true)
 
+    const roleCfg = ROLE_CONFIGS[selectedRole] || ROLE_CONFIGS.skipper
+
     try {
       let verifiedUser = null
       if (selectedRole === 'officer') {
@@ -138,23 +218,23 @@ export default function LoginModal({
           department: department,
           email: email,
           password: password,
-          full_name: fullName || 'Marine Officer'
+          full_name: fullName || roleCfg.namePlaceholder.replace('e.g. ', '')
         })
       } else {
         verifiedUser = await register({
           email: email,
           password: password,
-          full_name: fullName || 'Master Mariner',
-          role: selectedRole,
-          vessel_name: vesselName,
+          full_name: fullName || roleCfg.namePlaceholder.replace('e.g. ', ''),
+          role: selectedRole === 'general' ? 'public' : selectedRole,
+          vessel_name: vesselName || roleCfg.defaultVessel || '',
           registration_number: regNumber,
-          harbor_base: harborBase
+          harbor_base: harborBase || roleCfg.defaultHarbor || ''
         })
       }
 
       setClearancePass({
         user: verifiedUser,
-        role: selectedRole,
+        role: selectedRole === 'general' ? 'General User' : roleCfg.label,
         timestamp: new Date().toLocaleTimeString('en-GB') + ' IST'
       })
     } catch (err) {
@@ -244,7 +324,9 @@ export default function LoginModal({
                 </div>
                 {clearancePass.user?.vessel_name && (
                   <div className="flex justify-between">
-                    <span className="text-[#5C7788]">Vessel / Station:</span>
+                    <span className="text-[#5C7788]">
+                      {clearancePass.role === 'General User' || clearancePass.role === 'public' || clearancePass.role === 'general' ? 'Location / Interest:' : 'Vessel / Station:'}
+                    </span>
                     <strong className="text-[#0A1B27] font-mono">{clearancePass.user.vessel_name}</strong>
                   </div>
                 )}
@@ -332,7 +414,7 @@ export default function LoginModal({
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="skipper@orca.gov.in"
+                        placeholder="enter your email"
                         className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-2.5 rounded-xl outline-none transition-all font-mono text-[#0A1B27]"
                       />
                       <Mail size={15} className="absolute right-3.5 top-3 text-slate-400 pointer-events-none" />
@@ -406,7 +488,7 @@ export default function LoginModal({
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Capt. Rajesh Mondal"
+                      placeholder={ROLE_CONFIGS[selectedRole]?.namePlaceholder || 'e.g. Capt. Rajesh Mondal'}
                       className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-2.5 rounded-xl outline-none transition-all text-[#0A1B27]"
                     />
                   </div>
@@ -415,13 +497,8 @@ export default function LoginModal({
                     <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1">
                       Maritime Role *
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'skipper', label: 'Vessel Skipper', icon: Ship },
-                        { id: 'officer', label: 'Marine Officer', icon: ShieldCheck },
-                        { id: 'researcher', label: 'INCOIS Scientist', icon: Compass },
-                        { id: 'port_crew', label: 'Port Master', icon: Anchor }
-                      ].map((role) => {
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {MARITIME_ROLES.map((role) => {
                         const Icon = role.icon
                         const isSelected = selectedRole === role.id
                         return (
@@ -430,6 +507,8 @@ export default function LoginModal({
                             type="button"
                             onClick={() => setSelectedRole(role.id)}
                             className={`flex items-center gap-2 p-2 rounded-lg border text-left text-xs font-bold transition-all cursor-pointer ${
+                              role.id === 'general' ? 'col-span-2 sm:col-span-1' : ''
+                            } ${
                               isSelected
                                 ? 'bg-[#E1F3F5] border-[#007A78] text-[#007A78] shadow-2xs'
                                 : 'bg-slate-50 border-slate-200 text-[#5C7788] hover:bg-slate-100'
@@ -477,7 +556,15 @@ export default function LoginModal({
                             required
                             value={govtIdNumber}
                             onChange={(e) => setGovtIdNumber(e.target.value)}
-                            placeholder="ICG-PATROL-402"
+                            placeholder={
+                              officerType === 'coast_guard'
+                                ? 'ICG-PATROL-402'
+                                : officerType === 'incois_scientist'
+                                ? 'GOI-INCOIS-PFZ-02'
+                                : officerType === 'fisheries_officer'
+                                ? 'WB-FISH-7734'
+                                : 'PORT-SAGAR-01'
+                            }
                             className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] text-xs px-3 py-2 rounded-xl outline-none font-mono"
                           />
                         </div>
@@ -499,25 +586,25 @@ export default function LoginModal({
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1">
-                          Vessel Name
+                          {ROLE_CONFIGS[selectedRole]?.field1Label || 'Vessel Name'}
                         </label>
                         <input
                           type="text"
                           value={vesselName}
                           onChange={(e) => setVesselName(e.target.value)}
-                          placeholder="M/V Sagar Kripa"
+                          placeholder={ROLE_CONFIGS[selectedRole]?.field1Placeholder || 'M/V Sagar Kripa'}
                           className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] text-xs px-3 py-2 rounded-xl outline-none"
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-[#0A1B27] uppercase tracking-wider mb-1">
-                          Harbor Base
+                          {ROLE_CONFIGS[selectedRole]?.field2Label || 'Harbor Base'}
                         </label>
                         <input
                           type="text"
                           value={harborBase}
                           onChange={(e) => setHarborBase(e.target.value)}
-                          placeholder="Shankarpur Harbour"
+                          placeholder={ROLE_CONFIGS[selectedRole]?.field2Placeholder || 'Shankarpur Harbour'}
                           className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] text-xs px-3 py-2 rounded-xl outline-none"
                         />
                       </div>
@@ -533,7 +620,7 @@ export default function LoginModal({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="officer@orca.gov.in"
+                      placeholder={ROLE_CONFIGS[selectedRole]?.emailPlaceholder || 'enter your email'}
                       className="w-full bg-slate-50 border border-slate-300 focus:border-[#007A78] focus:bg-white text-xs px-3.5 py-2.5 rounded-xl outline-none transition-all font-mono text-[#0A1B27]"
                     />
                   </div>
@@ -573,7 +660,7 @@ export default function LoginModal({
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
-                          <span>Create Maritime Account</span>
+                          <span>{ROLE_CONFIGS[selectedRole]?.btnText || 'Create Maritime Account'}</span>
                           <ArrowRight size={14} />
                         </>
                       )}

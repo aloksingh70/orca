@@ -106,7 +106,7 @@ export default function Advisory() {
   const userRole = user?.role || activeRole || 'skipper'
   const currentRole = (() => {
     const lower = (userRole || '').toLowerCase()
-    if (lower.includes('public') || lower.includes('visit') || lower.includes('guest') || lower.includes('curious')) return 'public'
+    if (lower.includes('public') || lower.includes('general') || lower.includes('citizen') || lower.includes('visit') || lower.includes('guest') || lower.includes('curious')) return 'public'
     if (lower.includes('fish') || lower.includes('skip') || lower.includes('boat')) return 'skipper'
     if (lower.includes('officer') || lower.includes('guard') || lower.includes('patrol')) return 'officer'
     if (lower.includes('research') || lower.includes('scien') || lower.includes('ocean')) return 'researcher'

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Compass, KeyRound, LogOut, Ship, ShieldCheck, Anchor, Sparkles, MapPin } from 'lucide-react'
+import { Menu, X, Compass, KeyRound, LogOut, Ship, ShieldCheck, Anchor, Sparkles, MapPin, User } from 'lucide-react'
 import Logo from './Logo.jsx'
 import LanguageSelector from './LanguageSelector.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
@@ -165,6 +165,13 @@ export default function Navbar({ darkGlass = false }) {
                         PORT
                       </span>
                     </>
+                  ) : user?.role === 'public' || user?.role === 'general' ? (
+                    <>
+                      <User size={14} className="text-sky-600" />
+                      <span className="text-[9px] bg-sky-100 text-sky-800 font-bold px-1 py-0.5 rounded font-mono">
+                        GENERAL
+                      </span>
+                    </>
                   ) : (
                     <>
                       <Ship size={14} className="text-[#007A78]" />
@@ -258,6 +265,8 @@ export default function Navbar({ darkGlass = false }) {
               <div className="flex items-center gap-2 font-bold text-[#0A1B27]">
                 {user?.role === 'officer' ? (
                   <ShieldCheck size={16} className="text-[#E86014]" />
+                ) : user?.role === 'public' || user?.role === 'general' ? (
+                  <User size={16} className="text-sky-600" />
                 ) : (
                   <Ship size={16} className="text-[#007A78]" />
                 )}
